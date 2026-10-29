@@ -4,6 +4,7 @@ package main
 
 import (
 	"bufio"
+	"cachevent/internal/defs"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -21,7 +22,8 @@ import (
 const usage = `cachevent: see what AI and dev tools store on disk, and what's safe to remove.
 
 Usage:
-  cachevent scan [--json] [--all] [--root DIR]...   find and explain what's on disk
+  cachevent scan [--json] [--all] [--all-drives] [--root DIR]...
+                                                    find and explain what's on disk
   cachevent clean [--yes] [--dry-run] PATH...       move cleanable items to quarantine
   cachevent quarantine                              list quarantined items
   cachevent restore ID...                           put quarantined items back
@@ -67,9 +69,13 @@ func cmdScan(args []string) error {
 	fs := flag.NewFlagSet("scan", flag.ExitOnError)
 	asJSON := fs.Bool("json", false, "print JSON (stable format)")
 	all := fs.Bool("all", false, "also list items under 10 MB")
+	allDrives := fs.Bool("all-drives", false, "search every fixed drive")
 	var roots stringList
 	fs.Var(&roots, "root", "folder to search for projects and environments (repeatable; default: home)")
 	fs.Parse(args)
+	if *allDrives {
+		roots = append(roots, defs.FixedDrives()...)
+	}
 
 	s, err := newSession()
 	if err != nil {
@@ -85,8 +91,26 @@ func cmdScan(args []string) error {
 		enc.SetIndent("", "  ")
 		return enc.Encode(res)
 	}
+	printGrowth(os.Stdout, s.growth(res))
 	printReport(os.Stdout, res, *all)
+	fmt.Fprintf(os.Stderr, "Read %d folders in %.1fs.\n", res.DirsScanned, float64(res.DurationMS)/1000)
 	return nil
+}
+
+func printGrowth(w io.Writer, g []growth) {
+	if len(g) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "Changed since %s:\n", g[0].Since.Local().Format("Mon Jan 2"))
+	for _, x := range g {
+		sign := "+"
+		if x.Delta < 0 {
+			sign = "-"
+			x.Delta = -x.Delta
+		}
+		fmt.Fprintf(w, "  %s%-9s %s\n", sign, human(x.Delta), x.Name)
+	}
+	fmt.Fprintln(w)
 }
 
 func printReport(w io.Writer, res scan.Result, all bool) {

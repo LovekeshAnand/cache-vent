@@ -3,6 +3,7 @@ package envs
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"cachevent/internal/defs"
@@ -42,5 +43,23 @@ func TestPipenvOwnership(t *testing.T) {
 func TestCondaIsNeverCleanable(t *testing.T) {
 	if v := Inspect(t.TempDir(), "conda"); defs.Cleanable(v.Safety) {
 		t.Errorf("conda env marked %s", v.Safety)
+	}
+}
+
+func TestPoetryHash(t *testing.T) {
+	// Vectors from Python: urlsafe_b64encode(sha256(normcase(p))).decode()[:8]
+	if runtime.GOOS == "windows" {
+		if got := PoetryHash(`D:\personal_projects\demo`); got != "Gqh3N9QJ" {
+			t.Errorf("got %s", got)
+		}
+		if got := PoetryHash(`C:\Users\Me\My Project`); got != "ml-X5daL" {
+			t.Errorf("got %s", got)
+		}
+	}
+	if h, ok := PoetryEnvHash("my-app-ml-X5daL-py3.12"); !ok || h != "ml-X5daL" {
+		t.Errorf("env hash: %q %v", h, ok)
+	}
+	if _, ok := PoetryEnvHash("not-a-poetry-env"); ok {
+		t.Error("matched a non-poetry name")
 	}
 }

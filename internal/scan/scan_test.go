@@ -1,10 +1,12 @@
 package scan
 
 import (
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"testing"
 
 	"cachevent/internal/defs"
@@ -112,4 +114,64 @@ func TestLinksAreNotFollowed(t *testing.T) {
 	if n, _ := Size(dir); n >= 1<<20 {
 		t.Errorf("size %d includes the linked folder", n)
 	}
+}
+
+func TestNestedItemKeepsItsSize(t *testing.T) {
+	// A project inside a fixed-path item (e.g. the temp folder) must still measure its own bytes.
+	outer := t.TempDir()
+	write(t, filepath.Join(outer, "proj", "package-lock.json"), 10)
+	write(t, filepath.Join(outer, "proj", "node_modules", "big.js"), 300<<10)
+	entries := []defs.Entry{
+		{ID: "temp", Name: "Temp", Kind: "temp", Safety: defs.Regenerable, Paths: map[string][]string{defs.OSKey(): {outer}}},
+		{ID: "node-modules", Name: "node_modules", Kind: "dependencies", Safety: defs.Redownloadable,
+			Pattern: &defs.Pattern{DirName: "node_modules", Siblings: []string{"package-lock.json"}}},
+	}
+	res := Run(Options{Defs: entries, Roots: []string{filepath.Join(outer, "proj")}})
+	for _, it := range res.Items {
+		if it.ID == "node-modules" && it.Bytes < 300<<10 {
+			t.Errorf("nested node_modules measured %d bytes", it.Bytes)
+		}
+	}
+}
+
+// BenchmarkWalk compares a full scan with a plain standard-library walk that only
+// sums file sizes, over a synthetic tree of 100 projects (about 31k files).
+// go test ./internal/scan -bench Walk -benchmem
+func BenchmarkWalk(b *testing.B) {
+	root := b.TempDir()
+	for p := 0; p < 100; p++ {
+		proj := filepath.Join(root, "projects", "p"+strconv.Itoa(p))
+		os.MkdirAll(proj, 0o755)
+		os.WriteFile(filepath.Join(proj, "package-lock.json"), nil, 0o644)
+		for d := 0; d < 60; d++ {
+			dir := filepath.Join(proj, "node_modules", "pkg"+strconv.Itoa(d), "lib")
+			os.MkdirAll(dir, 0o755)
+			for f := 0; f < 5; f++ {
+				os.WriteFile(filepath.Join(dir, strconv.Itoa(f)+".js"), make([]byte, 512), 0o644)
+			}
+		}
+	}
+	entries := []defs.Entry{{ID: "node-modules", Name: "node_modules", Kind: "dependencies", Safety: defs.Redownloadable,
+		Pattern: &defs.Pattern{DirName: "node_modules", Siblings: []string{"package-lock.json"}}}}
+
+	b.Run("cachevent", func(b *testing.B) {
+		for b.Loop() {
+			if r := Run(Options{Defs: entries, Roots: []string{root}}); len(r.Items) != 100 {
+				b.Fatal("found", len(r.Items))
+			}
+		}
+	})
+	b.Run("stdlib-walkdir", func(b *testing.B) {
+		for b.Loop() {
+			var n int64
+			filepath.WalkDir(root, func(_ string, d fs.DirEntry, err error) error {
+				if err == nil && !d.IsDir() {
+					if fi, err := d.Info(); err == nil {
+						n += fi.Size()
+					}
+				}
+				return nil
+			})
+		}
+	})
 }

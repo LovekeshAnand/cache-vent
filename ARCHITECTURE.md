@@ -9,7 +9,7 @@
 - `os.Link` (hardlinks) and `os.Rename` (quarantine) work on NTFS, APFS, and ext4.
 - The web UI and the MCP server can be served from the same binary later.
 
-Dependencies stay minimal: a YAML parser for definitions, and an MCP SDK in phase 6.
+Dependencies stay minimal: a YAML parser for definitions, WebView2 bindings for the Windows window, and an MCP SDK in phase 6.
 
 ## Layout
 
@@ -23,7 +23,7 @@ internal/quarantine/ move, restore, purge, manifest
 definitions/         one YAML file per tool (community-editable), embedded in the binary
 ```
 
-`cmd/cachevent/app.go` holds the scan → save → plan → move flow, which the CLI and the UI both use, so they can't drift apart on safety. `ui.go` + `ui/index.html` are the desktop app: an HTTP server on 127.0.0.1 with a random port, shown in an Edge/Chrome `--app` window with its own profile. Every request must carry a per-launch random token (passed in the URL fragment) and the exact `127.0.0.1:port` Host header, so neither other websites nor DNS rebinding can drive it. The page is vanilla JS with no build step, and it inserts every file name as text, never as HTML. If the window feels too much like a browser, swap the shell for WebView2 (`go-webview2`) without touching the server.
+`cmd/cachevent/app.go` holds the scan → save → plan → move flow, which the CLI and the UI both use, so they can't drift apart on safety. `ui.go` + `ui/index.html` are the desktop app: an HTTP server on 127.0.0.1 with a random port, shown in a native window through WebView2 (`window_windows.go`, via `github.com/jchv/go-webview2`, pure Go with no cgo), falling back to an Edge/Chrome `--app` window with its own profile where WebView2 is missing. Every request must carry a per-launch random token (passed in the URL fragment) and the exact `127.0.0.1:port` Host header, so neither other websites nor DNS rebinding can drive it. The page is vanilla JS with no build step, and it inserts every file name as text, never as HTML. Links leave the app through `/api/open`, which only opens https sources the scan cites, in the default browser.
 
 Planned: `internal/dedupe/` (phase 2). New packages are added only when a phase needs them.
 
@@ -50,6 +50,8 @@ definitions/*.yaml ──► defs.Load ──► expand paths for this OS
 **Scanning is read-only.** Phase 1 never writes anywhere except its own data directory.
 
 **Don't follow symlinks or junctions.** Windows junctions can loop (e.g. `Application Data` → itself), and following links double-counts sizes. Hardlinked files are counted once per file ID.
+
+**Scanning engine.** On Windows each folder is read with `GetFileInformationByHandleEx(FileIdBothDirectoryInfo)`. One call returns ~64 KB of entries, each carrying its allocation size (bytes on disk), times, attributes, reparse tag and file ID, so sizing needs no per-file system call and no admin rights. Folders are read in parallel by at most about 4 walkers per CPU: a subfolder gets a new goroutine only when a slot is free, otherwise the current walker descends into it itself, so nothing ever waits on a semaphore and memory stays flat (a goroutine per folder held ~400 MB on a 1M-file drive). Listing buffers are pooled and names are decoded in place. The search for projects checks siblings and `pyvenv.cfg` against the listing already in memory instead of asking the disk. Numbers are in [BENCHMARKS.md](BENCHMARKS.md). Reading the NTFS MFT directly (WizTree-style) would be faster again but needs admin, so it isn't used.
 
 **Size means bytes on disk, not file length.** Sparse files and compressed NTFS files otherwise show inflated numbers.
 

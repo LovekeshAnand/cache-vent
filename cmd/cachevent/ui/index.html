@@ -3,131 +3,303 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Cache Vent shows what AI and developer tools keep on your disk and moves what is safe to remove into a quarantine you can restore from.">
 <title>Cache Vent</title>
+<script>try { if (localStorage.getItem("mode") === "dark") document.documentElement.dataset.mode = "dark"; } catch {}</script>
+<link rel="icon" href="data:image/png;base64,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">
 <style>
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: Furrow (deal 3/3, seed desktop-disk-tool-explains-9cfd·27fdeb59·2026-10-29·r0) · redesign: full
+ * nav: top bar, two tabs and the scan scope · signature: the plot plan, each tool a surveyed plot sized by its bytes · states: loading, empty, error, full
+ * axes: light/grotesk-sans/warm · posture: committed · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S4 R4 V4 · weakest: P, a disk list is a familiar argument; the plot plan makes the claim visible: most of your disk is three tools, and the green ones are safe */
+/* Hallmark · answered: faces are Segoe UI Variable and Cascadia Mono, shipped with Windows; the app runs offline under a strict CSP, so Red Hat is not fetched (flow.md App screens allows a system face) */
+/* Hallmark · dropped ids bar, c-quar, c-speed, c-total, c-when, items, qitems, shared, warnings and the old dialog ids · each was read only by this page's own script, rewritten with it; the server API is unchanged */
+
 :root {
-  --bg: #f6f7f9; --panel: #fff; --text: #1b1f24; --muted: #5f6b7a; --line: #e3e7ec;
-  --accent: #2563eb; --accent-text: #fff; --ok: #15803d; --ok-bg: #e7f6ec; --warn: #a16207; --warn-bg: #fdf4dc;
-  --bad: #b91c1c; --bad-bg: #fde8e8; --gray-bg: #eef1f4; --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px;
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.2rem; --text-xl: 1.44rem; --text-2xl: 1.728rem; --text-3xl: 2.488rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 120ms; --dur-short: 220ms;
+  --z-sticky: 200; --z-toast: 500;
+  --app-width: 1200px; --bar-h: 56px; --control-h: 36px;
+
+  --color-paper: oklch(96% 0.011 85); --color-paper-2: oklch(99.5% 0.005 85); --color-paper-3: oklch(92% 0.016 85);
+  --color-ink: oklch(18% 0.006 60); --color-ink-2: oklch(28% 0.008 60); --color-muted: oklch(44% 0.012 60); --color-rule: oklch(88% 0.013 85);
+  --color-accent: oklch(70% 0.19 40); --color-accent-ink: oklch(18% 0.006 60); --color-accent-soft: oklch(91% 0.05 50); --color-focus: oklch(60% 0.19 40);
+  --color-green: oklch(48% 0.11 150); --color-green-soft: oklch(92% 0.04 150);
+  --color-grid: oklch(90% 0.014 85); --color-sheet: oklch(99.3% 0.004 85);
+  --color-error: oklch(52% 0.19 27); --color-error-soft: oklch(94% 0.03 27);
+  --color-shade: oklch(18% 0.006 60 / 0.1); --color-scrim: oklch(18% 0.006 60 / 0.4);
+  --font-display: "Segoe UI Variable Display", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-outlier: "Cascadia Mono", ui-monospace, Consolas, monospace;
+  --radius-card: 10px; --radius-entry: 14px; --radius-pill: 6px; --rule-hair: 1px;
+  --shadow-lift: 0 1px 1px var(--color-shade), 0 2px 4px -1px var(--color-shade), 0 24px 44px -20px var(--color-scrim);
+  --tracking-display: -0.02em; --display-weight: 600; --body-weight: 400;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111418; --panel: #1a1e24; --text: #e6e9ed; --muted: #97a3b1; --line: #2b313a;
-    --accent: #4f8cff; --ok: #4ade80; --ok-bg: #12301d; --warn: #facc15; --warn-bg: #33290b;
-    --bad: #f87171; --bad-bg: #3a1515; --gray-bg: #232931;
-  }
+/* Light is the default; dark only when chosen in the app (data-mode on <html>). */
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --color-paper: oklch(17% 0.01 85); --color-paper-2: oklch(20% 0.01 85); --color-paper-3: oklch(23% 0.012 85);
+  --color-ink: oklch(94% 0.008 85); --color-ink-2: oklch(84% 0.008 85); --color-muted: oklch(72% 0.012 60); --color-rule: oklch(31% 0.012 85);
+  --color-accent: oklch(76% 0.16 40); --color-accent-ink: oklch(18% 0.006 60); --color-accent-soft: oklch(31% 0.06 45); --color-focus: oklch(76% 0.16 40);
+  --color-green: oklch(78% 0.12 150); --color-green-soft: oklch(29% 0.05 150);
+  --color-grid: oklch(25% 0.012 85); --color-sheet: oklch(21% 0.01 85);
+  --color-error: oklch(74% 0.15 27); --color-error-soft: oklch(28% 0.06 27);
+  --color-shade: oklch(5% 0.006 60 / 0.4); --color-scrim: oklch(5% 0.006 60 / 0.6);
+  --body-weight: 350;
 }
-* { box-sizing: border-box; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { overflow-x: clip; }
+html { scrollbar-color: var(--color-muted) var(--color-paper); scroll-padding-top: calc(var(--bar-h) + var(--space-lg)); }
+body { margin: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); font-weight: var(--body-weight); font-size: var(--text-md); line-height: 1.5; -webkit-font-smoothing: antialiased; caret-color: var(--color-accent); }
+::selection { background: color-mix(in oklab, var(--color-accent) 22%, transparent); color: var(--color-ink); }
+:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.16em; }
+h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--tracking-display); line-height: 1.1; overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
+h2 { font-size: var(--text-lg); }
+p { margin: 0; text-wrap: pretty; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
-header { display: flex; gap: 16px; align-items: center; padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-header h1 { font-size: 17px; margin: 0; }
-header .sub { color: var(--muted); font-size: 12px; }
+button, input { font: inherit; color: inherit; }
+.num { font-family: var(--font-outlier); font-variant-numeric: tabular-nums; }
+.muted { color: var(--color-muted); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+
+/* Keys: moulded, 6px, two sizes at most. */
+.key { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--control-h); padding: 0 var(--space-md); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-pill); background: var(--color-paper-2); color: var(--color-ink); font-weight: 500; font-size: var(--text-sm); cursor: pointer; white-space: nowrap; box-shadow: inset 0 1px 0 var(--color-sheet), 0 1px 1px var(--color-rule); transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); position: relative; }
+.key::before { content: ""; position: absolute; inset: -4px; }
+.key.primary { background: var(--color-accent); color: var(--color-accent-ink); border-color: color-mix(in oklab, var(--color-accent) 78%, var(--color-ink)); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-sheet) 32%, transparent), inset 0 -1px 0 color-mix(in oklab, var(--color-ink) 10%, transparent); }
+.key.quiet { background: none; border-color: transparent; box-shadow: none; color: var(--color-ink-2); text-decoration: underline; text-decoration-color: var(--color-rule); text-underline-offset: 0.2em; }
+.key.risky { color: var(--color-error); }
+@media (hover: hover) {
+  .key:hover:not(:disabled) { background: var(--color-paper-3); }
+  .key.primary:hover:not(:disabled) { background: color-mix(in oklab, var(--color-accent) 90%, var(--color-ink)); }
+  .key.quiet:hover:not(:disabled) { background: none; text-decoration-color: currentColor; }
+}
+.key:active:not(:disabled) { transform: translateY(1px); }
+.key:disabled { opacity: 0.55; cursor: not-allowed; }
+.key[aria-pressed="true"]:not(#mode) { background: var(--color-accent-soft); border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }
+.linkish { border: 0; background: none; padding: 0; font: inherit; color: var(--color-accent-ink); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.key .ico { width: 16px; height: 16px; flex: none; }
+.key .amt { font-family: var(--font-outlier); font-weight: 400; color: var(--color-muted); }
+.quick { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-lg); }
+.quick-note { margin-top: var(--space-xs); font-size: var(--text-sm); color: var(--color-muted); }
+.key[aria-busy="true"] { cursor: progress; }
+input[type=checkbox] { width: 16px; height: 16px; margin: 0; accent-color: var(--color-accent); cursor: pointer; }
+input[type=checkbox]:disabled { opacity: 0.55; cursor: not-allowed; }
+input[type=checkbox]:focus-visible { outline-offset: 3px; }
+.field { min-height: var(--control-h); padding: 0 var(--space-sm); border: var(--rule-hair) solid var(--color-muted); border-radius: var(--radius-pill); background: var(--color-paper-2); font-size: var(--text-sm); min-width: 0; }
+.field:focus-visible { outline-offset: -2px; }
+.field::placeholder { color: var(--color-muted); }
+
+/* Shell: one top bar. */
+.top { position: sticky; top: 0; z-index: var(--z-sticky); background: var(--color-paper); border-bottom: var(--rule-hair) solid var(--color-ink); }
+.top-in { max-width: var(--app-width); margin-inline: auto; padding: 0 var(--space-lg); min-height: var(--bar-h); display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; }
+.mark { display: inline-flex; align-items: center; gap: var(--space-xs); font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); letter-spacing: var(--tracking-display); text-decoration: none; }
+.mark img { height: 22px; width: auto; border-radius: 4px; background: #fff; }
+.tabs { display: flex; align-self: stretch; }
+.tab { border: 0; background: none; padding: 0 var(--space-sm); font-size: var(--text-sm); font-weight: 500; color: var(--color-muted); cursor: pointer; box-shadow: inset 0 -3px 0 transparent; transition: color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
+.tab[aria-selected="true"] { color: var(--color-ink); box-shadow: inset 0 -3px 0 var(--color-accent); }
+@media (hover: hover) { .tab:hover { color: var(--color-ink); } }
+.tab:active { transform: translateY(1px); }
+.tab:focus-visible { outline-offset: -2px; }
 .grow { flex: 1; }
-input[type=text] { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; min-width: 0; }
-#roots { width: min(420px, 100%); font-family: var(--mono); font-size: 12px; }
-button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 6px; padding: 7px 14px; cursor: pointer; }
-button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-button.danger { color: var(--bad); }
-button:disabled { opacity: .5; cursor: default; }
-main { padding: 16px 20px 90px; max-width: 1200px; margin: 0 auto; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
-.card b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
-.card span { color: var(--muted); font-size: 12px; }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
-.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--muted); }
-.tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
-.filters { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
-.list { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.row { display: grid; grid-template-columns: 28px 90px 1fr 120px 80px; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--line); cursor: pointer; }
-.row:first-child { border-top: 0; }
-.row:hover { background: var(--gray-bg); }
-.size { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
-.name { min-width: 0; }
-.path { font-family: var(--mono); font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.age { color: var(--muted); font-size: 12px; text-align: right; }
-.badge { font-size: 11.5px; padding: 2px 8px; border-radius: 99px; justify-self: start; white-space: nowrap; }
-.b-regenerable, .b-redownloadable { color: var(--ok); background: var(--ok-bg); }
-.b-unknown { color: var(--warn); background: var(--warn-bg); }
-.b-user-data { color: var(--bad); background: var(--bad-bg); }
-.tag { font-size: 11px; font-weight: 600; color: var(--bad); margin-left: 6px; }
-.details { padding: 4px 12px 14px 140px; border-top: 1px dashed var(--line); font-size: 13px; }
-.details p { margin: 8px 0; }
-.details table { border-collapse: collapse; font-size: 12.5px; }
-.details td { padding: 2px 14px 2px 0; }
-.details td.n { text-align: right; font-variant-numeric: tabular-nums; }
-.muted { color: var(--muted); }
-a { color: var(--accent); }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-top: 16px; font-size: 13px; }
-.panel h3 { margin: 0 0 8px; font-size: 13px; }
-.bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 12px; align-items: center; justify-content: flex-end; padding: 12px 20px; background: var(--panel); border-top: 1px solid var(--line); }
-.empty { padding: 40px; text-align: center; color: var(--muted); }
-dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); max-width: min(720px, 92vw); width: 100%; padding: 18px; }
-dialog::backdrop { background: rgb(0 0 0 / .45); }
-dialog h2 { margin: 0 0 10px; font-size: 16px; }
-dialog .targets { max-height: 45vh; overflow: auto; font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin: 10px 0; }
-dialog .actions { display: flex; gap: 8px; justify-content: flex-end; }
-#toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 9px 14px; border-radius: 8px; font-size: 13px; max-width: 90vw; display: none; z-index: 10; }
-.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: s 1s linear infinite; vertical-align: -2px; margin-right: 6px; }
-@keyframes s { to { transform: rotate(360deg); } }
-@media (max-width: 720px) {
-  .row { grid-template-columns: 28px 80px 1fr; }
-  .row .badge, .row .age { display: none; }
-  .details { padding-left: 12px; }
+.drives { display: flex; flex-wrap: wrap; gap: var(--space-3xs); width: fit-content; max-width: 100%; margin-bottom: var(--space-lg); }
+.scope, .drives { display: inline-flex; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-pill); padding: var(--space-3xs); background: var(--color-paper-3); }
+.drives button .amt { margin-left: var(--space-xs); font-size: var(--text-xs); color: var(--color-muted); }
+.scope button, .drives button { border: 0; border-radius: 4px; background: none; padding: 0 var(--space-sm); min-height: 28px; font-size: var(--text-sm); font-weight: 500; color: var(--color-muted); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.scope button[aria-checked="true"], .drives button[aria-checked="true"] { background: var(--color-paper-2); color: var(--color-ink); box-shadow: 0 1px 1px var(--color-shade); }
+@media (hover: hover) { .scope button:hover, .drives button:hover { color: var(--color-ink); } }
+.scope button:active, .drives button:active { transform: translateY(1px); }
+#roots { width: min(280px, 100%); font-family: var(--font-outlier); font-size: var(--text-xs); }
+
+/* Notices: inline, under the bar; errors stay until dismissed. */
+.notice { max-width: var(--app-width); margin: var(--space-md) auto 0; padding: 0 var(--space-lg); }
+.notice-in { display: flex; gap: var(--space-md); align-items: center; padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-ink); border-radius: var(--radius-pill); background: var(--color-paper-2); font-size: var(--text-sm); }
+.notice-in.bad { border-color: var(--color-error); background: var(--color-error-soft); }
+.notice-in p { flex: 1; }
+
+main { max-width: var(--app-width); margin-inline: auto; padding: var(--space-xl) var(--space-lg) 120px; }
+
+/* The survey head: the one figure that matters, then the ledger beside it. */
+.head { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--space-xl); align-items: start; margin-bottom: var(--space-lg); }
+.head h1 { font-size: var(--text-sm); font-family: var(--font-body); font-weight: 500; letter-spacing: 0; color: var(--color-muted); margin-bottom: var(--space-xs); }
+.figure { font-family: var(--font-display); font-weight: 600; font-size: var(--text-3xl); letter-spacing: var(--tracking-display); line-height: 1; font-variant-numeric: tabular-nums; }
+.head .sub { margin-top: var(--space-sm); color: var(--color-muted); }
+.ledger { margin: 0; border-top: var(--rule-hair) solid var(--color-ink); }
+.ledger div { display: flex; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule); font-size: var(--text-sm); }
+.ledger dt { color: var(--color-ink-2); display: flex; align-items: center; gap: var(--space-xs); }
+.ledger dd { margin: 0; }
+.ledger div.total { border-top: 2px solid var(--color-ink); border-bottom: 0; font-weight: 500; }
+.swatch { width: 16px; height: 8px; border-radius: 2px; flex: none; box-shadow: inset 0 0 0 1px var(--color-muted); }
+
+/* The plot plan. */
+.plan { position: relative; height: 248px; border: var(--rule-hair) solid var(--color-ink); border-radius: var(--radius-card); overflow: hidden; background: var(--color-paper-2); }
+.plot { position: absolute; border: 0; padding: var(--space-xs) var(--space-sm); text-align: left; font-size: var(--text-sm); color: var(--color-ink); cursor: pointer; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 0 1px var(--color-rule); transition: box-shadow var(--dur-micro) var(--ease-out); }
+.plot .n { font-weight: 500; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plot .b { font-size: var(--text-xs); }
+.plot.safe { background: var(--color-green-soft); border-top: 3px solid var(--color-green); }
+.plot.unknown, .plot.mixed { background: var(--color-paper-3); }
+.plot.user { background: repeating-linear-gradient(135deg, var(--color-paper-2) 0 6px, var(--color-rule) 6px 7px); }
+.plot.rest { background: var(--color-paper-2); cursor: default; color: var(--color-muted); }
+.plot.picked { box-shadow: inset 0 0 0 3px var(--color-accent); }
+@media (hover: hover) { .plot:not(.rest):hover { box-shadow: inset 0 0 0 2px var(--color-ink); } .plot.picked:hover { box-shadow: inset 0 0 0 3px var(--color-accent); } }
+.plot:active:not(.rest) { transform: translateY(1px); }
+.plot:focus-visible { outline-offset: -3px; }
+.key-row { display: flex; gap: var(--space-lg); flex-wrap: wrap; margin-top: var(--space-xs); font-size: var(--text-xs); color: var(--color-muted); }
+.key-row span { display: inline-flex; gap: var(--space-xs); align-items: center; }
+.sw-safe { background: var(--color-green); box-shadow: none; } .sw-unknown { background: var(--color-paper-3); } .sw-user { background: repeating-linear-gradient(135deg, var(--color-muted) 0 1px, var(--color-paper-2) 1px 3px); } .sw-picked { background: var(--color-paper-2); box-shadow: inset 0 0 0 2px var(--color-accent); }
+
+section.block { margin-top: var(--space-xl); }
+.block-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); margin-bottom: var(--space-sm); flex-wrap: wrap; }
+.ruled { list-style: none; margin: 0; padding: 0; border-top: var(--rule-hair) solid var(--color-ink); columns: 2; column-gap: var(--space-xl); }
+.ruled li { display: flex; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule); font-size: var(--text-sm); break-inside: avoid; }
+
+/* Filters and the ledger table. */
+.filters { flex: 1; display: flex; gap: var(--space-md); align-items: center; justify-content: flex-end; flex-wrap: wrap; font-size: var(--text-sm); color: var(--color-ink-2); }
+.filters label { display: inline-flex; gap: var(--space-xs); align-items: center; cursor: pointer; min-height: 44px; }
+#f-text { width: min(200px, 100%); }
+table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+thead th { text-align: left; font-weight: 500; color: var(--color-muted); padding: var(--space-xs) var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-ink); white-space: nowrap; }
+tbody td { padding: var(--space-xs) var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); vertical-align: middle; }
+th.sel, td.sel { width: 44px; padding-right: 0; }
+th.size, td.size { width: 104px; text-align: right; }
+th.verdict, td.verdict { width: 152px; }
+th.age, td.age { width: 112px; text-align: right; color: var(--color-muted); }
+td.size { font-weight: 500; }
+tr.group td { background: var(--color-paper); }
+tr.child td { background: color-mix(in oklab, var(--color-paper-3) 40%, var(--color-paper)); }
+tr.child td.what { padding-left: var(--space-xl); }
+tr.flash td { background: var(--color-accent-soft); }
+.hit { position: relative; display: inline-flex; }
+.hit::before { content: ""; position: absolute; inset: -14px; }
+.disc { display: flex; gap: var(--space-xs); align-items: flex-start; width: 100%; border: 0; background: none; padding: var(--space-2xs) 0; text-align: left; cursor: pointer; border-radius: 4px; min-width: 0; }
+.disc:focus-visible { outline-offset: 0; }
+.disc:active { transform: translateY(1px); }
+.chev { flex: none; width: 8px; height: 8px; margin: var(--space-xs) var(--space-2xs) 0 0; border-right: 2px solid var(--color-muted); border-bottom: 2px solid var(--color-muted); transform: rotate(-45deg); transition: transform var(--dur-short) var(--ease-out); }
+.disc[aria-expanded="true"] .chev { transform: rotate(45deg); }
+.disc.leaf .chev { visibility: hidden; }
+.what-in { min-width: 0; flex: 1; }
+.what-in .t { font-weight: 500; color: var(--color-ink); }
+.what-in .t .count { font-weight: var(--body-weight); color: var(--color-muted); }
+.path { display: block; font-family: var(--font-outlier); font-size: var(--text-xs); color: var(--color-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 62ch; }
+@media (hover: hover) { .disc:hover .t { text-decoration: underline; text-decoration-color: var(--color-rule); } }
+.chip { display: inline-block; padding: var(--space-3xs) var(--space-xs); border-radius: 4px; font-size: var(--text-xs); font-weight: 500; white-space: nowrap; }
+.c-safe { background: var(--color-green-soft); color: var(--color-ink); box-shadow: inset 3px 0 0 var(--color-green); }
+.c-unknown, .c-mixed { background: var(--color-paper-3); color: var(--color-ink-2); }
+.c-user { color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-ink); }
+.c-orphan { background: var(--color-accent); color: var(--color-accent-ink); margin-left: var(--space-xs); }
+.more td { color: var(--color-muted); padding-left: var(--space-xl); }
+
+/* An item opened: a notebook page. */
+tr.detail td { padding: 0 0 var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.entry { margin: var(--space-xs) var(--space-sm) 0 var(--space-xl); border-radius: var(--radius-entry); box-shadow: 0 0 0 1px var(--color-ink); overflow: hidden; background: linear-gradient(var(--color-grid) 1px, transparent 1px) 0 0 / 8px 8px, linear-gradient(90deg, var(--color-grid) 1px, transparent 1px) 0 0 / 8px 8px, var(--color-paper-2); }
+.entry-h { background: var(--color-ink); color: var(--color-paper); padding: var(--space-xs) var(--space-md); display: flex; justify-content: space-between; gap: var(--space-md); font-size: var(--text-sm); }
+.entry-b { padding: var(--space-md); display: grid; gap: var(--space-sm); }
+.entry dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-2xs) var(--space-md); font-size: var(--text-sm); }
+.entry dt { font-weight: 500; }
+.entry dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.pk { display: grid; grid-template-columns: minmax(0, max-content) max-content max-content minmax(0, 1fr); gap: 0 var(--space-lg); font-size: var(--text-xs); border-top: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); }
+.pk span { padding: var(--space-3xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk .r { text-align: right; }
+code { font-family: var(--font-outlier); font-size: 0.9em; padding: 0 var(--space-2xs); border-radius: 3px; background: var(--color-paper-3); }
+
+/* States. */
+.empty { padding: var(--space-2xl) var(--space-lg); border: var(--rule-hair) solid var(--color-ink); border-radius: var(--radius-card); background: var(--color-paper-2); display: grid; gap: var(--space-sm); justify-items: start; }
+.empty h2 { font-size: var(--text-2xl); }
+.empty p { color: var(--color-muted); max-width: 52ch; }
+.empty .key { margin-top: var(--space-xs); }
+.skel { height: 12px; border-radius: 3px; background: var(--color-paper-3); animation: pulse 1.4s var(--ease-out) infinite alternate; }
+@keyframes pulse { from { opacity: 1; } to { opacity: 0.45; } }
+
+/* Selection bar and the confirm page. */
+.selbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-sticky); background: var(--color-paper); border-top: var(--rule-hair) solid var(--color-ink); }
+.selbar-in { max-width: var(--app-width); margin-inline: auto; padding: var(--space-sm) var(--space-lg); display: flex; gap: var(--space-md); align-items: center; justify-content: flex-end; }
+.selbar-in p { flex: 1; font-weight: 500; }
+dialog { padding: 0; border: 0; background: none; color: var(--color-ink); max-width: min(680px, 94vw); width: 100%; }
+dialog::backdrop { background: var(--color-scrim); }
+dialog .entry { margin: 0; box-shadow: 0 0 0 1px var(--color-ink), var(--shadow-lift); }
+dialog .entry-h { padding: var(--space-sm) var(--space-md); }
+dialog .entry-h h2 { font-size: var(--text-md); font-family: var(--font-body); letter-spacing: 0; font-weight: 600; color: var(--color-paper); }
+.targets { max-height: 40vh; overflow: auto; border-top: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); font-size: var(--text-xs); }
+.targets div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: var(--space-sm); padding: var(--space-2xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
+.targets div span:first-child { text-align: right; }
+.targets div span:last-child { overflow-wrap: anywhere; }
+.foot { display: flex; gap: var(--space-xs); justify-content: flex-end; padding-top: var(--space-xs); }
+
+@media (max-width: 60rem) {
+  .head { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
+  .ruled { columns: 1; }
+  th.verdict, td.verdict, th.age, td.age { display: none; }
+  .top-in { padding: var(--space-xs) var(--space-md); gap: var(--space-sm); }
+  main { padding-inline: var(--space-md); }
+  .entry { margin-left: var(--space-sm); }
 }
 </style>
 </head>
 <body>
-<header>
-  <div><h1>Cache Vent</h1><div class="sub">What AI and dev tools store on your disk, and what's safe to remove</div></div>
-  <div class="grow"></div>
-  <input type="text" id="roots" title="Folders to search for projects and environments, separated by ;" aria-label="Folders to search">
-  <button class="primary" id="scan">Scan</button>
-</header>
-<main>
-  <div class="cards">
-    <div class="card"><b id="c-total">–</b><span>found</span></div>
-    <div class="card"><b id="c-clean">–</b><span>safe to move to quarantine</span></div>
-    <div class="card"><b id="c-quar">–</b><span>in quarantine</span></div>
-    <div class="card"><b id="c-when">–</b><span>last scan</span></div>
-  </div>
-  <div class="tabs">
-    <button id="t-disk" class="on">On disk</button>
-    <button id="t-quar">Quarantine</button>
-  </div>
-  <section id="disk">
-    <div class="filters">
-      <label><input type="checkbox" id="f-clean"> Only cleanable</label>
-      <label><input type="checkbox" id="f-small" checked> Hide under 10 MB</label>
-      <input type="text" id="f-text" placeholder="Filter by name or path" aria-label="Filter">
+<header class="top">
+  <div class="top-in">
+    <a class="mark" href="#" aria-label="Cache Vent, back to the disk view" id="home">
+      <img src="data:image/png;base64,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" alt="" width="44" height="22">Cache Vent</a>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" id="t-disk" aria-selected="true" aria-controls="disk" type="button">Disk</button>
+      <button class="tab" role="tab" id="t-quar" aria-selected="false" aria-controls="quar" type="button">Quarantine</button>
+    </nav>
+    <div class="grow"></div>
+    <div class="scope" role="radiogroup" aria-label="Where to look for projects">
+      <button type="button" role="radio" data-scope="home" aria-checked="false">Home folder</button>
+      <button type="button" role="radio" data-scope="drives" aria-checked="true">All drives</button>
+      <button type="button" role="radio" data-scope="custom" aria-checked="false">Folders</button>
     </div>
-    <div class="list" id="items"></div>
-    <div id="shared"></div>
-    <div id="warnings"></div>
+    <input class="field" type="text" id="roots" name="roots" autocomplete="off" placeholder="D:\code; E:\" aria-label="Folders to search, separated by semicolons" hidden>
+    <button class="key quiet" id="mode" type="button" aria-pressed="false">Dark mode</button>
+    <button class="key" id="scan" type="button">Scan</button>
+  </div>
+</header>
+<div class="notice" id="notice" role="status" aria-live="polite" hidden></div>
+
+<main>
+  <section id="disk" role="tabpanel" aria-labelledby="t-disk">
+    <div id="disk-body"></div>
   </section>
-  <section id="quar" hidden>
-    <div class="list" id="qitems"></div>
-    <p class="muted" id="qnote"></p>
-    <button class="danger" id="purge">Empty quarantine now…</button>
+  <section id="quar" role="tabpanel" aria-labelledby="t-quar" hidden>
+    <div class="block-h"><h2>Quarantine</h2><p class="muted" id="qnote"></p></div>
+    <div id="qbody"></div>
   </section>
 </main>
-<div class="bar" id="bar" hidden>
-  <span id="sel"></span>
-  <button id="clear">Clear</button>
-  <button class="primary" id="move">Move to quarantine…</button>
+
+<div class="selbar" id="selbar" hidden>
+  <div class="selbar-in">
+    <p id="sel" class="num"></p>
+    <button class="key" id="clear" type="button">Clear selection</button>
+    <button class="key risky" id="del" type="button" title="Delete for good, without quarantine">
+      <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4M6.75 6.5v4.5M9.25 6.5v4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Delete</button>
+    <button class="key primary" id="move" type="button">Move to quarantine</button>
+  </div>
 </div>
-<dialog id="dlg">
-  <h2 id="d-title"></h2>
-  <div id="d-body"></div>
-  <div class="actions"><button id="d-no">Cancel</button><button class="primary" id="d-yes"></button></div>
+
+<dialog id="dlg" aria-labelledby="d-title">
+  <div class="entry">
+    <div class="entry-h"><h2 id="d-title"></h2><span id="d-meta" class="num"></span></div>
+    <div class="entry-b"><div id="d-body"></div>
+      <div class="foot"><button class="key" id="d-no" type="button">Cancel</button><button class="key primary" id="d-yes" type="button"></button></div>
+    </div>
+  </div>
 </dialog>
-<div id="toast" role="status"></div>
+
 <script>
 "use strict";
 const token = location.hash.slice(1);
 const $ = (id) => document.getElementById(id);
-let state = null, lastKey = "", selected = new Set(), open = new Set();
+const DAY = 864e5, SMALL = 10 << 20;
+const VERDICT = { regenerable: ["Rebuilds itself", "safe"], redownloadable: ["Downloads again", "safe"], unknown: ["Not verified", "unknown"], "user-data": ["Your data", "user"], mixed: ["Mixed", "mixed"] };
+let state = null, lastKey = "", scope = "drives", view = "disk", noticeTimer = 0, drive = "";
+const selected = new Set(), openGroups = new Set(), openItems = new Set();
+try { scope = localStorage.getItem("scope") || "drives"; $("roots").value = localStorage.getItem("roots") || ""; } catch {}
 
 // h builds elements; strings always become text nodes, never HTML.
 function h(tag, props, ...kids) {
@@ -135,28 +307,41 @@ function h(tag, props, ...kids) {
   for (const [k, v] of Object.entries(props || {})) {
     if (k === "class") el.className = v;
     else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "indeterminate" || k === "checked") el[k] = !!v;
     else if (v !== false && v != null) el.setAttribute(k, v === true ? "" : v);
   }
   for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : String(kid));
   return el;
 }
-
 function human(n) {
   if (n < 1024) return n + " B";
   const u = "KMGTPE"; let i = -1;
   do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
-  return n.toFixed(1) + " " + u[i] + "B";
+  return (n >= 100 ? n.toFixed(0) : n.toFixed(1)) + " " + u[i] + "B";
 }
 function ago(t) {
-  if (!t) return "–";
-  const d = Math.floor((Date.now() - new Date(t)) / 864e5);
-  return d <= 0 ? "today" : d + "d ago";
+  if (!t) return "never";
+  const d = Math.floor((Date.now() - new Date(t)) / DAY);
+  return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago";
 }
-function toast(msg) {
-  const t = $("toast"); t.textContent = msg; t.style.display = "block";
-  clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = "none", 6000);
-}
+// prose turns `code` spans in definition text into <code>, as text nodes only.
+const prose = (t) => String(t || "").split("`").map((part, i) => i % 2 ? h("code", {}, part) : part);
+const sum = (xs) => xs.reduce((a, it) => a + it.bytes, 0);
+// driveOf is the drive letter of a Windows path ("D:"), or "/" elsewhere.
+const driveOf = (p) => /^[a-z]:/i.test(p) ? p.slice(0, 2).toUpperCase() : "/";
+// shown is the scan's items on the chosen drive (all of them when none is chosen).
+const shown = () => (state.scan?.items || []).filter((i) => !drive || driveOf(i.path) === drive);
+const verdict = (s) => VERDICT[s] || [s, "unknown"];
+const chip = (s) => h("span", { class: "chip c-" + verdict(s)[1] }, verdict(s)[0]);
 
+function notice(msg, bad, action) {
+  clearTimeout(noticeTimer);
+  const n = $("notice");
+  n.replaceChildren(h("div", { class: "notice-in" + (bad ? " bad" : "") }, h("p", {}, msg), action || null,
+    h("button", { class: "key quiet", type: "button", onclick: () => { n.hidden = true; } }, "Dismiss")));
+  n.hidden = false;
+  if (!bad) noticeTimer = setTimeout(() => { n.hidden = true; }, action ? 20000 : 9000);
+}
 async function api(path, body) {
   const r = await fetch(path, {
     method: body === undefined ? "GET" : "POST",
@@ -164,173 +349,449 @@ async function api(path, body) {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!r.ok) throw new Error((await r.text()).trim() || r.statusText);
-  return r.status === 202 ? null : r.json();
+  return r.status === 202 || r.status === 204 ? null : r.json();
 }
-
-function ask(title, body, yes) {
+function ask(title, meta, body, yes, risky) {
   return new Promise((resolve) => {
     $("d-title").textContent = title;
+    $("d-meta").textContent = meta;
     $("d-body").replaceChildren(body);
     $("d-yes").textContent = yes;
+    $("d-yes").className = "key " + (risky ? "risky" : "primary");
     const dlg = $("dlg");
     $("d-yes").onclick = () => { dlg.close(); resolve(true); };
     $("d-no").onclick = () => { dlg.close(); resolve(false); };
     dlg.oncancel = () => resolve(false);
     dlg.showModal();
+    $("d-no").focus();
   });
 }
 
 async function refresh() {
-  try { state = await api("/api/state"); } catch (e) { toast("Lost connection to Cache Vent: " + e.message); return; }
-  if (!$("roots").value && state.home) $("roots").value = (state.scan?.roots || [state.home]).join("; ");
+  try { state = await api("/api/state"); }
+  catch (e) {
+    notice("Cache Vent stopped answering. Close this window and open the app again.", true);
+    return;
+  }
   const scanning = state.scanning;
   $("scan").disabled = scanning;
-  $("scan").replaceChildren(...(scanning ? [h("span", { class: "spin" }), "Scanning… " + state.found + " found"] : ["Scan"]));
-  if (state.scan_error) toast(state.scan_error);
+  $("scan").setAttribute("aria-busy", scanning ? "true" : "false");
+  $("scan").textContent = scanning ? "Reading " + state.dirs.toLocaleString() + " folders" : state.scan ? "Scan again" : "Scan";
+  if (state.scan_error && !scanning) notice("The scan failed: " + state.scan_error, true, h("button", { class: "key", type: "button", onclick: startScan }, "Try again"));
   const key = (state.scan?.scanned_at || "") + "|" + state.quarantine.length + "|" + scanning;
   if (key !== lastKey) { lastKey = key; render(); }
   clearTimeout(refresh.t);
-  refresh.t = setTimeout(refresh, scanning ? 1000 : 5000);
+  refresh.t = setTimeout(refresh, scanning ? 700 : 5000);
 }
 
-function visibleItems() {
-  const items = state.scan?.items || [];
-  const q = $("f-text").value.trim().toLowerCase();
-  return items.filter((it) =>
-    (!$("f-clean").checked || it.cleanable) &&
-    (!$("f-small").checked || it.bytes >= 10 << 20 || selected.has(it.path)) &&
-    (!q || (it.name + " " + it.path).toLowerCase().includes(q)));
+function renderScope() {
+  for (const b of document.querySelectorAll(".scope button")) b.setAttribute("aria-checked", b.dataset.scope === scope ? "true" : "false");
+  $("roots").hidden = scope !== "custom";
+  const d = state?.drives || [];
+  document.querySelector('[data-scope="drives"]').title = d.length ? "Searches " + d.join(", ") : "";
+}
+
+// groups puts items of one definition together, biggest first.
+function groups(filtered) {
+  const q = filtered ? $("f-text")?.value.trim().toLowerCase() : "";
+  const by = new Map();
+  for (const it of shown()) {
+    if (filtered && $("f-clean")?.checked && !it.cleanable) continue;
+    if (q && !(it.name + " " + it.path).toLowerCase().includes(q)) continue;
+    if (!by.has(it.id)) by.set(it.id, { id: it.id, name: it.name, items: [] });
+    by.get(it.id).items.push(it);
+  }
+  const out = [...by.values()].map((g) => ({ ...g, bytes: sum(g.items),
+    newest: g.items.reduce((a, i) => (i.last_used || "") > a ? i.last_used : a, ""),
+    safety: new Set(g.items.map((i) => verdict(i.safety)[1])).size === 1 ? g.items[0].safety : "mixed" }));
+  return out.filter((g) => !filtered || !$("f-small")?.checked || g.bytes >= SMALL || g.items.some((i) => selected.has(i.path)))
+    .sort((a, b) => b.bytes - a.bytes);
 }
 
 function render() {
-  const items = state.scan?.items || [];
-  const sum = (xs) => xs.reduce((a, it) => a + it.bytes, 0);
-  $("c-total").textContent = state.scan ? human(sum(items)) : "–";
-  $("c-clean").textContent = state.scan ? human(sum(items.filter((i) => i.cleanable))) : "–";
-  $("c-quar").textContent = human(sum(state.quarantine));
-  $("c-when").textContent = state.scan ? ago(state.scan.scanned_at) : "never";
-  $("t-quar").textContent = "Quarantine (" + state.quarantine.length + ")";
-  // Drop selections that no longer exist after a rescan or clean.
-  const paths = new Set(items.filter((i) => i.cleanable).map((i) => i.path));
-  for (const p of selected) if (!paths.has(p)) selected.delete(p);
-  renderItems(); renderShared(); renderQuarantine(); renderBar();
+  renderScope();
+  $("t-quar").textContent = state.quarantine.length ? "Quarantine (" + state.quarantine.length + ")" : "Quarantine";
+  const cleanable = new Set((state.scan?.items || []).filter((i) => i.cleanable).map((i) => i.path));
+  for (const p of selected) if (!cleanable.has(p)) selected.delete(p);
+  renderDisk(); renderQuarantine(); renderBar();
 }
 
-function renderItems() {
-  const list = $("items");
-  if (!state.scan) { list.replaceChildren(h("div", { class: "empty" }, state.scanning ? "Scanning…" : "Press Scan to see what's on your disk.")); return; }
-  const rows = visibleItems().map((it) => {
-    const why = it.cleanable ? "" : it.safety === "user-data" ? "Your data: never cleaned" : it.safety === "unknown" ? "Not verified yet: never cleaned" : "Nothing to clean";
-    const box = h("input", { type: "checkbox", disabled: !it.cleanable, checked: selected.has(it.path), title: why || "Select to move to quarantine", "aria-label": "Select " + it.name,
-      onclick: (e) => e.stopPropagation(), onchange: (e) => { e.target.checked ? selected.add(it.path) : selected.delete(it.path); renderBar(); } });
-    const row = h("div", { class: "row", onclick: () => { open.has(it.path) ? open.delete(it.path) : open.add(it.path); renderItems(); } },
-      box,
-      h("div", { class: "size" }, human(it.bytes)),
-      h("div", { class: "name" }, h("div", {}, it.name, it.env?.orphaned ? h("span", { class: "tag" }, "ORPHANED") : null), h("div", { class: "path", title: it.path }, it.path)),
-      h("span", { class: "badge b-" + it.safety }, it.safety),
-      h("div", { class: "age", title: "last modified" }, ago(it.last_used)));
-    return open.has(it.path) ? [row, details(it)] : [row];
-  }).flat();
-  list.replaceChildren(...(rows.length ? rows : [h("div", { class: "empty" }, "Nothing matches the filters.")]));
+function renderDisk() {
+  const body = $("disk-body");
+  if (!state.scan) {
+    body.replaceChildren(state.scanning
+      ? h("div", { class: "empty", "aria-busy": "true" }, h("h2", {}, "Reading your folders"),
+          h("p", {}, "Usually a few seconds. Nothing is changed while it reads."),
+          ...[70, 54, 62, 40].map((w) => h("div", { class: "skel", style: "width:" + w + "%" })))
+      : h("div", { class: "empty" }, h("h2", {}, "See what your tools keep on disk"),
+          h("p", {}, "Cache Vent reads folder sizes and explains each one. Scanning changes nothing; cleaning moves things to a quarantine you can restore from."),
+          h("button", { class: "key primary", type: "button", onclick: startScan }, scope === "drives" ? "Scan all drives" : "Scan home folder")));
+    return;
+  }
+  const drives = [...new Set(state.scan.items.map((i) => driveOf(i.path)))].sort();
+  if (!drives.includes(drive)) drive = "";
+  const items = shown();
+  const clean = sum(items.filter((i) => i.cleanable));
+  const not = (s) => sum(items.filter((i) => !i.cleanable && i.safety === s));
+  const s = state.scan;
+  const head = h("div", { class: "head" },
+    h("div", {}, h("h1", {}, drive ? "Safe to free on " + drive : "Safe to free"), h("div", { class: "figure", id: "c-clean" }, human(clean)),
+      h("p", { class: "sub" }, "Scanned " + ago(s.scanned_at) + ". ",
+        h("span", { class: "num" }, (s.dirs_scanned || 0).toLocaleString()), " folders in ",
+        h("span", { class: "num" }, ((s.duration_ms || 0) / 1000).toFixed(1) + " s"),
+        ", projects searched in " + (s.roots || []).join(", ") + ". ",
+        (state.drives || []).some((d) => !(s.roots || []).some((r) => r.toLowerCase().startsWith(d.toLowerCase())))
+          ? h("button", { class: "linkish", type: "button", onclick: () => { scope = "drives"; try { localStorage.setItem("scope", scope); } catch {} renderScope(); startScan(); } }, "Search all drives")
+          : ""),
+      h("div", { class: "quick", id: "quick", role: "group", "aria-label": "Quick selections" }),
+      h("p", { class: "quick-note", id: "quick-note" })),
+    h("dl", { class: "ledger" },
+      row("sw-safe", "Safe to free", clean), row("sw-unknown", "Not verified", not("unknown")), row("sw-user", "Your data", not("user-data")),
+      row(null, "In quarantine", sum(state.quarantine)),
+      h("div", { class: "total" }, h("dt", {}, "Found"), h("dd", { class: "num" }, human(sum(items))))));
+  const plan = h("div", { class: "plan", id: "plan", role: "group", "aria-label": "Plot plan: each tool sized by the space it takes" });
+  const legend = h("div", { class: "key-row", "aria-hidden": "true" },
+    h("span", {}, h("i", { class: "swatch sw-safe" }), "Safe to free"), h("span", {}, h("i", { class: "swatch sw-unknown" }), "Not verified"),
+    h("span", {}, h("i", { class: "swatch sw-user" }), "Your data"), h("span", {}, h("i", { class: "swatch sw-picked" }), "Selected"),
+    h("span", { style: "margin-left:auto" }, "Click a block to find it in the list"));
+  const driveBar = drives.length > 1 ? h("div", { class: "drives", role: "radiogroup", "aria-label": "Show one drive" },
+    ["", ...drives].map((d) => {
+      const its = state.scan.items.filter((i) => !d || driveOf(i.path) === d);
+      return h("button", { type: "button", role: "radio", "aria-checked": drive === d ? "true" : "false",
+        title: human(sum(its.filter((i) => i.cleanable))) + " safe to free",
+        onclick: () => { drive = d; renderDisk(); } }, d ? "Drive " + d : "All drives", h("span", { class: "amt num" }, human(sum(its))));
+    })) : null;
+  const blocks = [driveBar, head, plan, legend, growthBlock(),
+    h("section", { class: "block" },
+      h("div", { class: "block-h" }, h("h2", {}, "Everything found"),
+        h("div", { class: "filters" },
+          h("label", {}, h("input", { type: "checkbox", id: "f-clean", onchange: renderTable }), "Only cleanable"),
+          h("label", {}, h("input", { type: "checkbox", id: "f-small", checked: true, onchange: renderTable }), "Hide under 10 MB"),
+          h("input", { class: "field", type: "text", id: "f-text", name: "filter", autocomplete: "off", placeholder: "Filter", "aria-label": "Filter by name or path", oninput: renderTable }))),
+      h("table", {}, h("thead", {}, h("tr", {},
+        h("th", { class: "sel" }, h("span", { class: "visually-hidden" }, "Select")), h("th", { class: "size" }, "Size"),
+        h("th", {}, "What"), h("th", { class: "verdict" }, "Verdict"), h("th", { class: "age" }, "Last changed"))),
+        h("tbody", { id: "rows" }))),
+    sharedBlock(), notesBlock()];
+  body.replaceChildren(...blocks.filter(Boolean));
+  renderTable();
+  drawPlan();
+  renderQuick();
+}
+
+function row(sw, label, n) {
+  return h("div", {}, h("dt", {}, sw ? h("i", { class: "swatch " + sw }) : null, label), h("dd", { class: "num" }, human(n)));
+}
+
+// squarify lays values (sorted, biggest first) into w x h as near-square tiles.
+function squarify(vals, w, h0) {
+  const total = vals.reduce((a, v) => a + v.v, 0) || 1, scale = w * h0 / total;
+  let x = 0, y = 0, W = w, H = h0, row = [];
+  const out = [], area = (r) => r.reduce((a, v) => a + v.a, 0);
+  const worst = (r, len) => { const s = area(r); let m = 0; for (const v of r) m = Math.max(m, len * len * v.a / (s * s), s * s / (len * len * v.a)); return m; };
+  const place = (r) => {
+    const s = area(r);
+    if (W >= H) { const t = s / H; let yy = y; for (const v of r) { const hh = v.a / t; out.push({ ...v, x, y: yy, w: t, h: hh }); yy += hh; } x += t; W -= t; }
+    else { const t = s / W; let xx = x; for (const v of r) { const ww = v.a / t; out.push({ ...v, x: xx, y, w: ww, h: t }); xx += ww; } y += t; H -= t; }
+  };
+  for (const v0 of vals) {
+    const v = { ...v0, a: v0.v * scale }, len = Math.min(W, H);
+    if (row.length && worst(row.concat(v), len) > worst(row, len)) { place(row); row = []; }
+    row.push(v);
+  }
+  if (row.length) place(row);
+  return out;
+}
+
+function drawPlan() {
+  const plan = $("plan");
+  if (!plan) return;
+  const all = groups(false).filter((g) => g.bytes > 0);
+  const top = all.slice(0, 12), rest = all.slice(12);
+  const vals = top.map((g) => ({ v: g.bytes, g }));
+  if (rest.length) vals.push({ v: sum(rest), rest: rest.length });
+  const W = plan.clientWidth, H = plan.clientHeight;
+  plan.replaceChildren(...squarify(vals, W, H).map((t) => {
+    const style = `left:${t.x}px;top:${t.y}px;width:${t.w}px;height:${t.h}px`;
+    const roomy = t.w > 84 && t.h > 44, label = t.rest ? "Everything else, " + t.rest + " tools" : t.g.name;
+    if (t.rest) return h("div", { class: "plot rest", style, title: label + ", " + human(t.v) }, roomy ? [h("span", { class: "n" }, label), h("span", { class: "b num" }, human(t.v))] : []);
+    const g = t.g, picked = g.items.some((i) => selected.has(i.path));
+    return h("button", { type: "button", class: "plot " + verdict(g.safety)[1] + (picked ? " picked" : ""), style,
+      title: g.name + ", " + human(g.bytes), "aria-label": g.name + ", " + human(g.bytes) + ", " + verdict(g.safety)[0] + ". Show in the list",
+      onclick: () => jumpTo(g.id) },
+      roomy ? [h("span", { class: "n" }, g.name), h("span", { class: "b num" }, human(g.bytes))] : []);
+  }));
+}
+
+function jumpTo(id) {
+  const f = $("f-text"); if (f) f.value = "";
+  if ($("f-clean")) $("f-clean").checked = false;
+  if ($("f-small")) $("f-small").checked = false;
+  openGroups.add(id); renderTable();
+  const r = document.querySelector('[data-group="' + CSS.escape(id) + '"]');
+  if (r) { r.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); r.classList.add("flash"); r.querySelector("button")?.focus({ preventScroll: true }); setTimeout(() => r.classList.remove("flash"), 1600); }
+}
+
+function growthBlock() {
+  const g = state.growth || [];
+  if (!g.length) return null;
+  const since = new Date(g[0].since).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+  return h("section", { class: "block" }, h("div", { class: "block-h" }, h("h2", {}, "Changed since " + since)),
+    h("ul", { class: "ruled" }, g.slice(0, 10).map((x) => h("li", {}, h("span", {}, x.name || x.id),
+      h("span", { class: "num" }, (x.delta > 0 ? "+" : "\u2212") + human(Math.abs(x.delta)))))));
+}
+
+function itemRows(it, child) {
+  const open = openItems.has(it.path);
+  const tr = h("tr", { class: child ? "child" : "group" },
+    h("td", { class: "sel" }, checkbox([it])),
+    h("td", { class: "size num" }, human(it.bytes)),
+    h("td", { class: "what" }, h("button", { class: "disc", type: "button", "aria-expanded": open ? "true" : "false",
+        onclick: () => { toggle(openItems, it.path); renderTable(); } },
+      h("span", { class: "chev" }),
+      h("span", { class: "what-in" }, child ? null : h("span", { class: "t" }, it.name), h("span", { class: "path", title: it.path }, it.path)),
+      it.env?.orphaned ? h("span", { class: "chip c-orphan" }, "Orphaned") : null)),
+    h("td", { class: "verdict" }, chip(it.safety)),
+    h("td", { class: "age" }, ago(it.last_used)));
+  return open ? [tr, h("tr", { class: "detail" }, h("td", { colspan: "5" }, details(it)))] : [tr];
+}
+
+// checkbox selects the cleanable items among its; it is disabled when none are.
+function checkbox(its) {
+  const can = its.filter((i) => i.cleanable), picked = can.filter((i) => selected.has(i.path)).length;
+  const why = can.length ? "Select to move to quarantine" : its[0].safety === "user-data" ? "Your data is never cleaned" : "Not verified, so never cleaned";
+  return h("label", { class: "hit", title: why }, h("input", { type: "checkbox", disabled: !can.length,
+    checked: can.length > 0 && picked === can.length, indeterminate: picked > 0 && picked < can.length,
+    "aria-label": why, onchange: (e) => { for (const i of can) e.target.checked ? selected.add(i.path) : selected.delete(i.path); changed(); } }));
+}
+
+function renderTable() {
+  const tb = $("rows");
+  if (!tb) return;
+  const rows = groups(true).flatMap((g) => {
+    if (g.items.length === 1) { const r = itemRows(g.items[0], false); r[0].dataset.group = g.id; return r; }
+    const open = openGroups.has(g.id);
+    const head = h("tr", { class: "group", "data-group": g.id },
+      h("td", { class: "sel" }, checkbox(g.items)),
+      h("td", { class: "size num" }, human(g.bytes)),
+      h("td", { class: "what" }, h("button", { class: "disc", type: "button", "aria-expanded": open ? "true" : "false",
+          onclick: () => { toggle(openGroups, g.id); renderTable(); } },
+        h("span", { class: "chev" }), h("span", { class: "what-in" }, h("span", { class: "t" }, g.name, h("span", { class: "count" }, ", " + g.items.length + " folders"))))),
+      h("td", { class: "verdict" }, chip(g.safety)),
+      h("td", { class: "age" }, ago(g.newest)));
+    if (!open) return [head];
+    const shown = g.items.slice(0, 300);
+    return [head, ...shown.flatMap((i) => itemRows(i, true)),
+      g.items.length > shown.length ? h("tr", { class: "more" }, h("td", { colspan: "5" }, (g.items.length - shown.length) + " more, " + human(sum(g.items.slice(300))) + ". The group checkbox selects them too.")) : null].filter(Boolean);
+  });
+  tb.replaceChildren(...(rows.length ? rows : [h("tr", {}, h("td", { colspan: "5", class: "muted" }, "Nothing matches the filters."))]));
 }
 
 function details(it) {
-  const src = /^https?:\/\//.test(it.source || "") ? h("a", { href: it.source, target: "_blank", rel: "noopener" }, it.source) : null;
-  const env = it.env;
-  return h("div", { class: "details" },
-    h("p", {}, it.if_deleted),
-    env?.project ? h("p", {}, "Project: ", h("span", { class: "path" }, env.project), env.orphaned ? " (no longer exists)" : "") : null,
-    env?.packages?.length ? h("table", {}, env.packages.slice(0, 12).map((p) =>
-      h("tr", {}, h("td", {}, p.name), h("td", { class: "muted" }, p.version), h("td", { class: "n" }, human(p.bytes)),
-        h("td", { class: "muted" }, p.other_envs ? "same version in " + p.other_envs + " other env(s)" : "")))) : null,
-    h("p", { class: "muted" }, "Source: ", src || "none (that's why it's not marked safe)"));
+  const env = it.env, src = /^https?:\/\//.test(it.source || "") ? it.source : "";
+  return h("div", { class: "entry" },
+    h("div", { class: "entry-h" }, h("span", {}, it.name), h("span", { class: "num" }, human(it.bytes))),
+    h("div", { class: "entry-b" },
+      h("p", {}, prose(it.if_deleted)),
+      h("dl", {},
+        h("dt", {}, "Where"), h("dd", { class: "num" }, it.path),
+        env?.project ? [h("dt", {}, "Project"), h("dd", { class: "num" }, env.project, env.orphaned ? " (no longer exists)" : "")] : null,
+        env && !env.project && env.manager === "poetry" ? [h("dt", {}, "Project"), h("dd", {}, "not found in the scanned folders")] : null,
+        h("dt", {}, "Source"), h("dd", {}, src ? h("a", { href: src, target: "_blank", rel: "noopener" }, src) : "none yet, which is why it is not marked safe")),
+      env?.packages?.length ? h("div", { class: "pk", role: "table", "aria-label": "Largest packages" }, env.packages.slice(0, 10).flatMap((p) => [
+        h("span", { role: "cell" }, p.name), h("span", { role: "cell", class: "num muted" }, p.version), h("span", { role: "cell", class: "num r" }, human(p.bytes)),
+        h("span", { role: "cell", class: "muted" }, p.other_envs ? "same version in " + p.other_envs + " other env" + (p.other_envs > 1 ? "s" : "") : "")])) : null,
+      h("div", {}, h("button", { class: "key", type: "button", onclick: () => api("/api/reveal", { path: it.path }).catch((e) => notice(e.message, true)) }, "Show in folder"))));
 }
 
-function renderShared() {
+function sharedBlock() {
   const byKey = new Map();
-  for (const it of state.scan?.items || []) for (const p of it.env?.packages || []) {
+  for (const it of shown()) for (const p of it.env?.packages || []) {
     if (!p.other_envs) continue;
     const k = p.name + " " + p.version, d = byKey.get(k) || { k, bytes: 0, envs: 0 };
     d.bytes += p.bytes; d.envs++; byKey.set(k, d);
   }
-  const dups = [...byKey.values()].filter((d) => d.bytes - d.bytes / d.envs >= 50 << 20).sort((a, b) => b.bytes - a.bytes).slice(0, 10);
-  $("shared").replaceChildren(...(dups.length ? [h("div", { class: "panel" },
-    h("h3", {}, "Same package installed in several environments"),
-    h("table", {}, dups.map((d) => h("tr", {}, h("td", {}, d.k), h("td", { class: "muted" }, d.envs + " envs"), h("td", {}, human(d.bytes) + " total")))),
-    h("p", { class: "muted" }, "uv keeps one shared copy across environments: ", h("a", { href: "https://docs.astral.sh/uv/concepts/cache/", target: "_blank", rel: "noopener" }, "docs.astral.sh/uv")))] : []));
+  const dups = [...byKey.values()].filter((d) => d.bytes - d.bytes / d.envs >= 50 << 20).sort((a, b) => b.bytes - a.bytes).slice(0, 8);
+  if (!dups.length) return null;
+  return h("section", { class: "block" },
+    h("div", { class: "block-h" }, h("h2", {}, "Installed more than once"),
+      h("p", { class: "muted" }, "uv can share one copy across environments. ", h("a", { href: "https://docs.astral.sh/uv/concepts/cache/", target: "_blank", rel: "noopener" }, "How uv caches"))),
+    h("ul", { class: "ruled" }, dups.map((d) => h("li", {}, h("span", { class: "num" }, d.k), h("span", { class: "num" }, d.envs + " envs, " + human(d.bytes))))));
+}
+
+function notesBlock() {
   const w = state.scan?.warnings || [];
-  $("warnings").replaceChildren(...(w.length ? [h("div", { class: "panel muted" }, h("h3", {}, "Notes"), w.map((x) => h("div", {}, x)))] : []));
+  if (!w.length) return null;
+  return h("section", { class: "block" }, h("div", { class: "block-h" }, h("h2", {}, "Notes")),
+    h("ul", { class: "ruled", style: "columns:1" }, w.slice(0, 20).map((x) => h("li", { class: "muted" }, x))));
 }
 
 function renderQuarantine() {
   const q = state.quarantine;
-  $("qnote").textContent = "Items are moved, not deleted, and are purged automatically after " + state.max_age_days + " days.";
-  $("purge").disabled = !q.length;
-  if (!q.length) { $("qitems").replaceChildren(h("div", { class: "empty" }, "Quarantine is empty.")); return; }
-  $("qitems").replaceChildren(...q.map((m) => {
-    const left = Math.max(0, Math.ceil((new Date(m.quarantined_at).getTime() + state.max_age_days * 864e5 - Date.now()) / 864e5));
-    return h("div", { class: "row", style: "cursor:default" },
-      h("span"), h("div", { class: "size" }, human(m.bytes)),
-      h("div", { class: "name" }, h("div", {}, m.definition_id), h("div", { class: "path", title: m.original_path }, m.original_path)),
-      h("div", { class: "age" }, "purged in " + left + "d"),
-      h("button", { onclick: () => restore(m) }, "Restore"));
-  }));
+  $("qnote").textContent = "Moved, not deleted. Purged after " + state.max_age_days + " days.";
+  if (!q.length) {
+    $("qbody").replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Nothing in quarantine"),
+      h("p", {}, "What you clean waits here for " + state.max_age_days + " days, so you can put it back.")));
+    return;
+  }
+  $("qbody").replaceChildren(
+    h("table", {}, h("thead", {}, h("tr", {}, h("th", { class: "size" }, "Size"), h("th", {}, "Was at"), h("th", { class: "age" }, "Purged in"), h("th", { class: "verdict" }, h("span", { class: "visually-hidden" }, "Action")))),
+      h("tbody", {}, [...q].reverse().map((m) => {
+        const left = Math.max(0, Math.ceil((new Date(m.quarantined_at).getTime() + state.max_age_days * DAY - Date.now()) / DAY));
+        return h("tr", {}, h("td", { class: "size num" }, human(m.bytes)),
+          h("td", {}, h("span", { class: "t" }, m.definition_id), h("span", { class: "path", title: m.original_path }, m.original_path)),
+          h("td", { class: "age" }, left + (left === 1 ? " day" : " days")),
+          h("td", { class: "verdict" }, h("button", { class: "key", type: "button", onclick: () => restore(m) }, "Restore")));
+      }))),
+    h("div", { class: "foot", style: "justify-content:flex-start;margin-top:var(--space-lg)" },
+      h("button", { class: "key", type: "button", onclick: () => restoreIDs(q.map((m) => m.id), "Put everything back.") }, "Restore all"),
+      h("button", { class: "key risky", type: "button", onclick: purgeAll }, "Delete everything in quarantine now")));
 }
 
 function renderBar() {
+  if (!state) return;
   const items = (state.scan?.items || []).filter((i) => selected.has(i.path));
-  $("bar").hidden = !items.length;
-  $("sel").textContent = items.length + " selected · " + human(items.reduce((a, i) => a + i.bytes, 0));
+  $("selbar").hidden = !items.length || view !== "disk";
+  $("sel").textContent = items.length + (items.length === 1 ? " item" : " items") + " selected, " + human(sum(items));
 }
 
-async function startScan() {
-  const roots = $("roots").value.split(";").map((s) => s.trim()).filter(Boolean);
-  try { await api("/api/scan", { roots }); lastKey = ""; clearTimeout(refresh.t); refresh(); } catch (e) { toast(e.message); }
+// picks are the one-click selections; each button selects its set, or unselects it when already chosen.
+function picks() {
+  const items = shown().filter((i) => i.cleanable), cutoff = Date.now() - 30 * DAY;
+  return [
+    { id: "safe", label: "everything safe", items },
+    { id: "stale", label: "unused for 30 days", items: items.filter((i) => i.last_used && new Date(i.last_used) < cutoff) },
+  ];
+}
+function renderQuick() {
+  const box = $("quick");
+  if (!box) return;
+  box.replaceChildren(...picks().map((p) => {
+    const on = p.items.length > 0 && p.items.every((i) => selected.has(i.path));
+    return h("button", { class: "key", type: "button", "aria-pressed": on ? "true" : "false", disabled: !p.items.length,
+      title: p.items.length ? "" : "Nothing " + p.label + " right now",
+      onclick: () => { for (const i of p.items) on ? selected.delete(i.path) : selected.add(i.path); changed(); } },
+      (on ? "Unselect " : "Select ") + p.label, h("span", { class: "amt" }, human(sum(p.items))));
+  }));
+  $("quick-note").textContent = selected.size ? "Press Esc to clear the selection." : "Or tick what you want in the list below.";
+}
+// changed redraws everything that shows the selection.
+function changed() { renderTable(); renderBar(); drawPlan(); renderQuick(); }
+function toggle(set, k) { set.has(k) ? set.delete(k) : set.add(k); }
+
+function roots() {
+  if (scope === "drives") return state.drives || [];
+  if (scope === "custom") return $("roots").value.split(";").map((s) => s.trim()).filter(Boolean);
+  return [];
+}
+async function startScan(keepNotice) {
+  if (scope === "custom" && !roots().length) { notice("Type one or more folders, separated by semicolons.", true); $("roots").focus(); return; }
+  try { await api("/api/scan", { roots: roots() }); if (keepNotice !== true) $("notice").hidden = true; lastKey = ""; refresh(); } catch (e) { notice(e.message, true); }
 }
 
 async function moveSelected() {
   const paths = [...selected];
   let targets;
-  try { targets = await api("/api/plan", { paths }); } catch (e) { toast(e.message); return; }
-  if (!targets.length) { toast("Nothing old enough to move."); return; }
+  try { targets = await api("/api/plan", { paths }); } catch (e) { notice(e.message, true); return; }
+  if (!targets.length) { notice("Nothing selected is old enough to move yet."); return; }
   const total = targets.reduce((a, t) => a + t.Bytes, 0);
-  const body = h("div", {},
-    h("p", {}, "These will be moved to quarantine. Nothing is deleted; you can restore them for " + state.max_age_days + " days."),
-    h("div", { class: "targets" }, targets.map((t) => h("div", {}, human(t.Bytes).padStart(9, " ") + "  " + t.Path))));
-  if (!await ask("Move " + targets.length + " item(s), " + human(total) + "?", body, "Move to quarantine")) return;
+  const body = h("div", { style: "display:grid;gap:var(--space-sm)" },
+    h("p", {}, "These are moved, not deleted. You can restore any of them for " + state.max_age_days + " days."),
+    h("div", { class: "targets num" }, targets.map((t) => h("div", {}, h("span", {}, human(t.Bytes)), h("span", {}, t.Path)))));
+  if (!await ask("Move to quarantine", targets.length + " items, " + human(total), body, "Move " + human(total))) return;
+  $("move").disabled = true; $("move").setAttribute("aria-busy", "true"); $("move").textContent = "Moving";
   try {
     const r = await api("/api/clean", { paths });
     selected.clear(); lastKey = "";
-    toast("Moved " + human(r.bytes) + " to quarantine." + (r.failed.length ? " " + r.failed.length + " skipped: " + r.failed[0] : ""));
+    const ids = r.moved.map((m) => m.id);
+    notice("Freed " + human(r.bytes) + ". It stays in quarantine for " + state.max_age_days + " days." + (r.failed.length ? " Skipped " + r.failed.length + ": " + r.failed[0] : ""), r.failed.length > 0,
+      ids.length ? h("button", { class: "key", type: "button", onclick: () => restoreIDs(ids, "Undone. Everything is back where it was.") }, "Undo") : null);
     refresh();
-  } catch (e) { toast(e.message); }
+  } catch (e) { notice(e.message, true); }
+  $("move").disabled = false; $("move").setAttribute("aria-busy", "false"); $("move").textContent = "Move to quarantine";
+}
+// restoreIDs puts items back, then rescans so they show up in the list again.
+// deleteSelected skips the quarantine: the confirm says so and offers the safe move instead.
+async function deleteSelected() {
+  const paths = [...selected];
+  let targets;
+  try { targets = await api("/api/plan", { paths }); } catch (e) { notice(e.message, true); return; }
+  if (!targets.length) { notice("Nothing selected is old enough to delete yet."); return; }
+  const total = targets.reduce((a, t) => a + t.Bytes, 0);
+  const body = h("div", { style: "display:grid;gap:var(--space-sm)" },
+    h("p", {}, h("strong", {}, "This cannot be undone."), " These are deleted now and skip the quarantine. To keep a way back for " + state.max_age_days + " days, use Move to quarantine instead."),
+    h("div", { class: "targets num" }, targets.map((t) => h("div", {}, h("span", {}, human(t.Bytes)), h("span", {}, t.Path)))));
+  if (!await ask("Delete for good", targets.length + " items, " + human(total), body, "Delete " + human(total), true)) return;
+  const btn = $("del");
+  btn.disabled = true; btn.setAttribute("aria-busy", "true");
+  try {
+    const r = await api("/api/delete", { paths });
+    selected.clear(); lastKey = "";
+    notice("Deleted " + human(r.bytes) + " for good." + (r.failed.length ? " Skipped " + r.failed.length + ": " + r.failed[0] : ""), r.failed.length > 0);
+    refresh();
+  } catch (e) { notice(e.message, true); }
+  btn.disabled = false; btn.setAttribute("aria-busy", "false");
 }
 
-async function restore(m) {
-  try { await api("/api/restore", { ids: [m.id] }); toast("Restored " + m.original_path + ". Scan again to see it."); lastKey = ""; refresh(); }
-  catch (e) { toast(e.message); }
+async function restoreIDs(ids, msg) {
+  try { await api("/api/restore", { ids }); notice(msg); lastKey = ""; await refresh(); if (!state.scanning) startScan(true); }
+  catch (e) { notice(e.message, true); }
 }
-
+const restore = (m) => restoreIDs([m.id], "Put back " + m.original_path + ".");
 async function purgeAll() {
-  const total = state.quarantine.reduce((a, m) => a + m.bytes, 0);
-  if (!await ask("Permanently delete " + human(total) + "?", h("p", {}, "This empties the quarantine now instead of waiting. It can't be undone."), "Delete permanently")) return;
-  try { const r = await api("/api/purge", {}); toast("Freed " + human(r.bytes) + "."); lastKey = ""; refresh(); } catch (e) { toast(e.message); }
+  const total = sum(state.quarantine);
+  if (!await ask("Delete for good", human(total), h("p", {}, "This empties the quarantine now instead of after " + state.max_age_days + " days. It cannot be undone."), "Delete " + human(total), true)) return;
+  try { const r = await api("/api/purge", {}); notice("Deleted " + human(r.bytes) + " for good."); lastKey = ""; refresh(); } catch (e) { notice(e.message, true); }
 }
-
-function tab(name) {
+function show(name) {
+  view = name;
   $("disk").hidden = name !== "disk"; $("quar").hidden = name !== "quar";
-  $("t-disk").classList.toggle("on", name === "disk"); $("t-quar").classList.toggle("on", name === "quar");
+  $("t-disk").setAttribute("aria-selected", name === "disk" ? "true" : "false");
+  $("t-quar").setAttribute("aria-selected", name === "quar" ? "true" : "false");
+  history.replaceState(null, "", "?view=" + name + location.hash);
+  renderBar();
 }
 
-$("scan").onclick = startScan;
+for (const b of document.querySelectorAll(".scope button")) b.onclick = () => {
+  scope = b.dataset.scope; try { localStorage.setItem("scope", scope); } catch {}
+  renderScope();
+  if (scope === "custom") { $("roots").focus(); if (!roots().length) return; }
+  if (!state?.scanning) startScan();
+};
+$("roots").oninput = () => { try { localStorage.setItem("roots", $("roots").value); } catch {} };
 $("roots").onkeydown = (e) => { if (e.key === "Enter") startScan(); };
+$("scan").onclick = startScan;
+function syncMode() {
+  const dark = document.documentElement.dataset.mode === "dark";
+  $("mode").textContent = dark ? "Light mode" : "Dark mode";
+  $("mode").setAttribute("aria-pressed", dark ? "true" : "false");
+}
+$("mode").onclick = () => {
+  const dark = document.documentElement.dataset.mode !== "dark";
+  if (dark) document.documentElement.dataset.mode = "dark"; else delete document.documentElement.dataset.mode;
+  try { localStorage.setItem("mode", dark ? "dark" : "light"); } catch {}
+  syncMode();
+};
+syncMode();
+// Links leave the app: the server opens known source links in the default browser.
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[href^='https://']");
+  if (!a) return;
+  e.preventDefault();
+  api("/api/open", { url: a.href }).catch((err) => notice(err.message, true));
+});
 $("move").onclick = moveSelected;
-$("clear").onclick = () => { selected.clear(); renderItems(); renderBar(); };
-$("purge").onclick = purgeAll;
-$("t-disk").onclick = () => tab("disk");
-$("t-quar").onclick = () => tab("quar");
-for (const id of ["f-clean", "f-small"]) $(id).onchange = renderItems;
-$("f-text").oninput = renderItems;
+$("del").onclick = deleteSelected;
+$("clear").onclick = () => { selected.clear(); changed(); };
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("dlg").open && selected.size && e.target.tagName !== "INPUT") { selected.clear(); changed(); }
+});
+$("t-disk").onclick = () => show("disk");
+$("t-quar").onclick = () => show("quar");
+$("home").onclick = (e) => { e.preventDefault(); show("disk"); };
+new ResizeObserver(() => drawPlan()).observe(document.body);
+show(new URLSearchParams(location.search).get("view") === "quar" ? "quar" : "disk");
+renderScope();
 refresh();
 </script>
 </body>

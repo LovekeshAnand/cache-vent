@@ -148,9 +148,23 @@ func (s Store) Restore(id string) (Manifest, error) {
 // Purge permanently removes items quarantined longer than olderThan (0 means all).
 // This is the only place Cache Vent deletes files.
 func (s Store) Purge(olderThan time.Duration) (n int, bytes int64, err error) {
+	return s.purge(func(m Manifest) bool { return olderThan <= 0 || time.Since(m.QuarantinedAt) >= olderThan })
+}
+
+// PurgeIDs permanently removes the given quarantined items, e.g. right after a
+// move when the user chose to delete instead of keep.
+func (s Store) PurgeIDs(ids []string) (n int, bytes int64, err error) {
+	want := map[string]bool{}
+	for _, id := range ids {
+		want[id] = true
+	}
+	return s.purge(func(m Manifest) bool { return want[m.ID] })
+}
+
+func (s Store) purge(match func(Manifest) bool) (n int, bytes int64, err error) {
 	var errs []error
 	for _, m := range s.List() {
-		if olderThan > 0 && time.Since(m.QuarantinedAt) < olderThan {
+		if !match(m) {
 			continue
 		}
 		// Payload first: if this fails halfway, the manifest keeps the item listed and retried.

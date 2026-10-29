@@ -21,7 +21,7 @@ Disk tool that explains what AI and dev tools store and what's safe to remove. R
 ## Commands
 
 ```
-go build ./cmd/Cache Vent
+go build ./cmd/cachevent
 go test ./...
-go run ./cmd/Cache Vent scan
+go run ./cmd/cachevent scan
 ```

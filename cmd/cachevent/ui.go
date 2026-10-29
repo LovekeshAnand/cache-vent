@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -42,6 +43,7 @@ type uiServer struct {
 	mu       sync.Mutex
 	scanning bool
 	found    int
+	dirs     int64
 	scanErr  string
 	lastSeen time.Time
 }
@@ -70,6 +72,9 @@ func cmdUI(args []string) error {
 		fmt.Println(url)
 		select {}
 	}
+	if nativeWindow(s.dataDir, url) { // blocks until the window is closed
+		return nil
+	}
 	closed := make(chan struct{})
 	if !openWindow(s.dataDir, url, closed) {
 		fmt.Println("Open", url)
@@ -97,15 +102,18 @@ func (v *uiServer) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'")
 		w.Write(indexHTML)
 	})
 	mux.HandleFunc("GET /api/state", v.state)
 	mux.HandleFunc("POST /api/scan", v.startScan)
 	mux.HandleFunc("POST /api/plan", v.plan)
 	mux.HandleFunc("POST /api/clean", v.clean)
+	mux.HandleFunc("POST /api/delete", v.del)
 	mux.HandleFunc("POST /api/restore", v.restore)
 	mux.HandleFunc("POST /api/purge", v.purge)
+	mux.HandleFunc("POST /api/reveal", v.reveal)
+	mux.HandleFunc("POST /api/open", v.open)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Host check blocks DNS rebinding; the token blocks other local pages, since a
@@ -131,12 +139,13 @@ func (v *uiServer) state(w http.ResponseWriter, r *http.Request) {
 	home, _ := os.UserHomeDir()
 	v.mu.Lock()
 	st := map[string]any{
-		"scanning": v.scanning, "found": v.found, "scan_error": v.scanErr,
+		"scanning": v.scanning, "found": v.found, "dirs": v.dirs, "scan_error": v.scanErr, "drives": defs.FixedDrives(),
 		"quarantine": v.s.store.List(), "max_age_days": int(quarantine.MaxAge.Hours() / 24), "home": home,
 	}
 	v.mu.Unlock()
 	if ok {
 		st["scan"] = last
+		st["growth"] = v.s.growth(last)
 	}
 	if err != nil {
 		st["scan_error"] = err.Error()
@@ -161,9 +170,9 @@ func (v *uiServer) startScan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "a scan is already running", http.StatusConflict)
 		return
 	}
-	v.scanning, v.found, v.scanErr = true, 0, ""
+	v.scanning, v.found, v.dirs, v.scanErr = true, 0, 0, ""
 	go func() {
-		_, err := v.s.scan(req.Roots, func(n int) { v.mu.Lock(); v.found = n; v.mu.Unlock() })
+		_, err := v.s.scan(req.Roots, func(n int, d int64) { v.mu.Lock(); v.found, v.dirs = n, d; v.mu.Unlock() })
 		v.mu.Lock()
 		v.scanning = false
 		if err != nil {
@@ -213,6 +222,26 @@ func (v *uiServer) clean(w http.ResponseWriter, r *http.Request) {
 	}
 	res := v.s.clean(targets)
 	v.markCleaned(res.Moved)
+	writeJSON(w, res)
+}
+
+// del deletes for good, after the same planning and checks as clean.
+func (v *uiServer) del(w http.ResponseWriter, r *http.Request) {
+	var req struct{ Paths []string }
+	if !readJSON(w, r, &req) || v.busy(w) {
+		return
+	}
+	targets, err := v.s.plan(req.Paths)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	res, err := v.s.delete(targets)
+	v.markCleaned(res.Moved)
+	if err != nil {
+		// Moved but not purged: they are still safe in quarantine, so say so.
+		res.Failed = append(res.Failed, "some items are still in quarantine and can be deleted there: "+err.Error())
+	}
 	writeJSON(w, res)
 }
 
@@ -269,6 +298,53 @@ func (v *uiServer) purge(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, map[string]any{"purged": n, "bytes": b})
 }
+
+// reveal shows an item in the file manager. Only paths from the last scan are
+// accepted, so the page can't be used to open arbitrary locations.
+func (v *uiServer) reveal(w http.ResponseWriter, r *http.Request) {
+	var req struct{ Path string }
+	if !readJSON(w, r, &req) {
+		return
+	}
+	last, _, _ := v.s.lastScan()
+	for _, it := range last.Items {
+		if it.Path == req.Path {
+			switch runtime.GOOS {
+			case "windows":
+				exec.Command("explorer.exe", "/select,", it.Path).Start()
+			case "darwin":
+				exec.Command("open", "-R", it.Path).Start()
+			default:
+				exec.Command("xdg-open", filepath.Dir(it.Path)).Start()
+			}
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+	http.Error(w, "not in the last scan", http.StatusNotFound)
+}
+
+// open shows a definition's source in the default browser, outside the app.
+// Only https links that the last scan cites (or the uv cache docs) are accepted.
+func (v *uiServer) open(w http.ResponseWriter, r *http.Request) {
+	var req struct{ URL string }
+	if !readJSON(w, r, &req) {
+		return
+	}
+	ok := req.URL == uvDocs
+	last, _, _ := v.s.lastScan()
+	for _, it := range last.Items {
+		ok = ok || (it.Source != "" && it.Source == req.URL)
+	}
+	if !ok || !strings.HasPrefix(req.URL, "https://") {
+		http.Error(w, "not a known source link", http.StatusBadRequest)
+		return
+	}
+	openBrowser(req.URL)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+const uvDocs = "https://docs.astral.sh/uv/concepts/cache/"
 
 func readJSON(w http.ResponseWriter, r *http.Request, v any) bool {
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {

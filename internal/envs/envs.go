@@ -5,12 +5,16 @@
 package envs
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/csv"
 	"errors"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -134,8 +138,7 @@ func Inspect(dir, manager string) Verdict {
 			v.IfDeleted = "Its project folder no longer exists, so nothing uses it."
 		}
 	case "poetry":
-		// ponytail: owner not resolved. Poetry names envs <name>-<hash of project path>-py<ver>;
-		// hash the pyproject.toml folders found under the roots if orphan detection is needed.
+		// The owner is filled in by the scan via PoetryHash, once it has seen the projects.
 		v.ID, v.Name = "poetry-env", "Poetry environment"
 		v.Safety, v.Source = defs.Redownloadable, venvDocs
 		v.IfDeleted = "Poetry recreates it on the next `poetry install` in its project."
@@ -145,6 +148,31 @@ func Inspect(dir, manager string) Verdict {
 	}
 	v.Info = info
 	return v
+}
+
+// poetryEnvRe matches Poetry's env folder names: <name>-<8-char path hash>-py<version>.
+var poetryEnvRe = regexp.MustCompile(`^.+-([A-Za-z0-9_-]{8})-py\d+\.\d+$`)
+
+// PoetryEnvHash extracts the project-path hash from a Poetry env folder name.
+func PoetryEnvHash(envDir string) (string, bool) {
+	m := poetryEnvRe.FindStringSubmatch(filepath.Base(envDir))
+	if m == nil {
+		return "", false
+	}
+	return m[1], true
+}
+
+// PoetryHash is the hash Poetry puts in env names for a project folder:
+// urlsafe-base64(sha256(normcase(path)))[:8], as in poetry's generate_env_name.
+// ponytail: poetry also resolves symlinks (realpath) first; projects reached through a
+// link won't match and just show no owner.
+func PoetryHash(projectDir string) string {
+	p := filepath.Clean(projectDir)
+	if runtime.GOOS == "windows" {
+		p = strings.ToLower(p)
+	}
+	sum := sha256.Sum256([]byte(p))
+	return base64.URLEncoding.EncodeToString(sum[:])[:8]
 }
 
 func hasManifest(dir string) bool {

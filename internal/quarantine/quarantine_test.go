@@ -110,3 +110,21 @@ func TestMoveRefusesOwnFolders(t *testing.T) {
 		t.Error("moved a folder containing the data dir")
 	}
 }
+
+func TestPurgeIDsOnlyThose(t *testing.T) {
+	st, a, _ := setup(t)
+	_, b, _ := setup(t)
+	ma, err := st.Move(a, "node-modules", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.Move(b, "node-modules", 0); err != nil {
+		t.Fatal(err)
+	}
+	if n, _, err := st.PurgeIDs([]string{ma.ID}); n != 1 || err != nil {
+		t.Fatalf("purged %d, %v", n, err)
+	}
+	if left := st.List(); len(left) != 1 || left[0].OriginalPath != b {
+		t.Errorf("left: %+v", left)
+	}
+}
