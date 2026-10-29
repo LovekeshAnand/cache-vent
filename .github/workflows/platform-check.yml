@@ -18,8 +18,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-15-intel is GitHub's Intel Mac runner; drop it if GitHub retires the label.
-        os: [macos-latest, macos-15-intel, ubuntu-latest]
+        # Apple silicon and Linux. GitHub's Intel Mac runners (macos-15-intel) are being retired
+        # and often can't be acquired, so they're left out; the Intel build is the same Go
+        # program cross-compiled, and install.sh picks it by `uname -m`.
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
