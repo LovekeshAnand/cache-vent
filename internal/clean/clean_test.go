@@ -56,3 +56,20 @@ func TestPlan(t *testing.T) {
 		t.Error("downgraded entry was accepted")
 	}
 }
+
+func TestSyncedFolders(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("OneDrive", filepath.Join(dir, "od"))
+	for _, p := range []string{
+		filepath.Join(dir, "od", "proj", "node_modules"),
+		filepath.Join(dir, "Dropbox", "proj", "node_modules"),
+		filepath.Join(dir, "OneDrive - Contoso", "x"),
+	} {
+		if syncedFolder(p) == "" {
+			t.Errorf("%s not detected as synced", p)
+		}
+	}
+	if s := syncedFolder(filepath.Join(dir, "code", "node_modules")); s != "" {
+		t.Errorf("plain folder detected as synced: %s", s)
+	}
+}

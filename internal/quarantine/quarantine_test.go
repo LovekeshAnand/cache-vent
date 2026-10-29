@@ -85,3 +85,28 @@ func TestPurgeOnlyExpired(t *testing.T) {
 		t.Errorf("left: %+v", left)
 	}
 }
+
+func TestPurgeReadOnlyFiles(t *testing.T) {
+	// Read-only files are common (git objects inside node_modules) and must not block purge.
+	st, item, _ := setup(t)
+	ro := filepath.Join(item, "pkg", "readonly.pack")
+	os.WriteFile(ro, []byte("x"), 0o444)
+	if _, err := st.Move(item, "node-modules", 0); err != nil {
+		t.Fatal(err)
+	}
+	if n, _, err := st.Purge(0); n != 1 || err != nil {
+		t.Fatalf("purged %d, %v", n, err)
+	}
+}
+
+func TestMoveRefusesOwnFolders(t *testing.T) {
+	st, _, _ := setup(t)
+	inside := filepath.Join(st.DataDir, "quarantine", "x")
+	os.MkdirAll(inside, 0o755)
+	if _, err := st.Move(inside, "x", 0); err == nil {
+		t.Error("moved something inside quarantine")
+	}
+	if _, err := st.Move(filepath.Dir(st.DataDir), "x", 0); err == nil {
+		t.Error("moved a folder containing the data dir")
+	}
+}

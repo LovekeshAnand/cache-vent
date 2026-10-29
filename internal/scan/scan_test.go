@@ -43,6 +43,9 @@ func TestRun(t *testing.T) {
 	write(t, filepath.Join(root, "proj", "requirements.txt"), 10)
 	writeVenv(t, filepath.Join(root, "proj", ".venv"))
 	writeVenv(t, filepath.Join(root, "bare", "venv"))
+	// Quarantined items must not show up as cleanable again.
+	write(t, filepath.Join(root, ".cachevent-quarantine", "x", "payload", "package-lock.json"), 10)
+	write(t, filepath.Join(root, ".cachevent-quarantine", "x", "payload", "node_modules", "a.js"), 10)
 
 	fixed := filepath.Join(t.TempDir(), "models")
 	big := filepath.Join(fixed, "blob")

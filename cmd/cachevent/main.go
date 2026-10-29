@@ -10,15 +10,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
-	"cachevent/definitions"
-	"cachevent/internal/clean"
-	"cachevent/internal/defs"
-	"cachevent/internal/envs"
 	"cachevent/internal/quarantine"
 	"cachevent/internal/scan"
 )
@@ -31,17 +26,27 @@ Usage:
   cachevent quarantine                              list quarantined items
   cachevent restore ID...                           put quarantined items back
   cachevent purge [--all] [--yes]                   delete quarantined items (default: older than 14 days)
+  cachevent ui [--no-window]                        open the desktop app
 
 Nothing is ever deleted outside quarantine. Quarantined items are purged after 14 days.
 `
 
+// defaultCmd is set to "ui" in the desktop build, so double-clicking it opens the app:
+//
+//	go build -ldflags "-H windowsgui -X main.defaultCmd=ui" -o CacheVent.exe ./cmd/cachevent
+var defaultCmd = ""
+
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprint(os.Stderr, usage)
-		os.Exit(2)
+		if defaultCmd == "ui" {
+			os.Args = append(os.Args, "ui")
+		} else {
+			fmt.Fprint(os.Stderr, usage)
+			os.Exit(2)
+		}
 	}
 	cmds := map[string]func([]string) error{
-		"scan": cmdScan, "clean": cmdClean, "quarantine": cmdList, "restore": cmdRestore, "purge": cmdPurge,
+		"scan": cmdScan, "clean": cmdClean, "quarantine": cmdList, "restore": cmdRestore, "purge": cmdPurge, "ui": cmdUI,
 	}
 	cmd, ok := cmds[os.Args[1]]
 	if !ok {
@@ -58,27 +63,6 @@ func main() {
 	}
 }
 
-// open returns the data dir and quarantine store, purging expired items first.
-// There is no background service, so this is when the 14-day purge happens.
-func open() (string, quarantine.Store, error) {
-	dd, err := defs.DataDir()
-	if err != nil {
-		return "", quarantine.Store{}, err
-	}
-	if err := os.MkdirAll(dd, 0o755); err != nil {
-		return "", quarantine.Store{}, err
-	}
-	st := quarantine.Store{DataDir: dd}
-	n, b, err := st.Purge(quarantine.MaxAge)
-	if n > 0 {
-		fmt.Fprintf(os.Stderr, "Purged %d quarantined items older than 14 days (%s).\n", n, human(b))
-	}
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "purge:", err)
-	}
-	return dd, st, nil
-}
-
 func cmdScan(args []string) error {
 	fs := flag.NewFlagSet("scan", flag.ExitOnError)
 	asJSON := fs.Bool("json", false, "print JSON (stable format)")
@@ -87,30 +71,13 @@ func cmdScan(args []string) error {
 	fs.Var(&roots, "root", "folder to search for projects and environments (repeatable; default: home)")
 	fs.Parse(args)
 
-	entries, err := defs.Load(definitions.FS)
+	s, err := newSession()
 	if err != nil {
 		return err
 	}
-	dd, _, err := open()
+	fmt.Fprintln(os.Stderr, "Scanning ...")
+	res, err := s.scan(roots, nil)
 	if err != nil {
-		return err
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	if len(roots) == 0 {
-		roots = stringList{home}
-	}
-	fmt.Fprintf(os.Stderr, "Scanning %s ...\n", strings.Join(roots, ", "))
-	res := scan.Run(scan.Options{
-		Defs:  entries,
-		Envs:  envs.Find(),
-		Roots: roots,
-		// App data is covered by fixed-path definitions; walking it for patterns is slow and noisy.
-		Skip: []string{filepath.Join(home, "AppData"), filepath.Join(home, "Library")},
-	})
-	if err := saveScan(dd, res); err != nil {
 		return err
 	}
 	if *asJSON {
@@ -119,43 +86,6 @@ func cmdScan(args []string) error {
 		return enc.Encode(res)
 	}
 	printReport(os.Stdout, res, *all)
-	return nil
-}
-
-// saveScan keeps the last scan for clean, and appends per-definition totals to history.
-// ponytail: history mixes scans with different --root sets; store roots per line if that skews trends.
-func saveScan(dd string, res scan.Result) error {
-	b, err := json.Marshal(res)
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(filepath.Join(dd, "last-scan.json"), b, 0o644); err != nil {
-		return err
-	}
-	sums := map[string]int64{}
-	for _, it := range res.Items {
-		sums[it.ID] += it.Bytes
-	}
-	ids := make([]string, 0, len(sums))
-	for id := range sums {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-	f, err := os.OpenFile(filepath.Join(dd, "history.jsonl"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	enc := json.NewEncoder(f)
-	for _, id := range ids {
-		if err := enc.Encode(struct {
-			Time  time.Time `json:"time"`
-			ID    string    `json:"id"`
-			Bytes int64     `json:"bytes"`
-		}{res.ScannedAt, id, sums[id]}); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -265,23 +195,11 @@ func cmdClean(args []string) error {
 	if fs.NArg() == 0 {
 		return errors.New("usage: cachevent clean [--yes] [--dry-run] PATH...")
 	}
-	entries, err := defs.Load(definitions.FS)
+	s, err := newSession()
 	if err != nil {
 		return err
 	}
-	dd, st, err := open()
-	if err != nil {
-		return err
-	}
-	var last scan.Result
-	b, err := os.ReadFile(filepath.Join(dd, "last-scan.json"))
-	if err != nil {
-		return errors.New("no scan yet; run `cachevent scan` first")
-	}
-	if err := json.Unmarshal(b, &last); err != nil {
-		return err
-	}
-	targets, err := clean.Plan(last, entries, fs.Args(), time.Now())
+	targets, err := s.plan(fs.Args())
 	if err != nil {
 		return err
 	}
@@ -301,17 +219,11 @@ func cmdClean(args []string) error {
 	if !*yes && !confirm(fmt.Sprintf("Move %d items (%s) to quarantine?", len(targets), human(total))) {
 		return nil
 	}
-	var moved int64
-	var failed []string
-	for _, t := range targets {
-		m, err := st.Move(t.Path, t.DefinitionID, t.Bytes)
-		if err != nil {
-			failed = append(failed, err.Error())
-			continue
-		}
-		moved += t.Bytes
-		fmt.Printf("moved  %s  (restore: cachevent restore %s)\n", t.Path, m.ID)
+	r := s.clean(targets)
+	for _, m := range r.Moved {
+		fmt.Printf("moved  %s  (restore: cachevent restore %s)\n", m.OriginalPath, m.ID)
 	}
+	failed := r.Failed
 	for i, f := range failed {
 		if i == 5 {
 			fmt.Printf("skipped %d more\n", len(failed)-5)
@@ -319,16 +231,16 @@ func cmdClean(args []string) error {
 		}
 		fmt.Println("skipped", f)
 	}
-	fmt.Printf("Moved %s to quarantine. It is purged after 14 days.\n", human(moved))
+	fmt.Printf("Moved %s to quarantine. It is purged after 14 days.\n", human(r.Bytes))
 	return nil
 }
 
 func cmdList(args []string) error {
-	_, st, err := open()
+	s, err := newSession() // purges items past 14 days
 	if err != nil {
 		return err
 	}
-	items := st.List()
+	items := s.store.List()
 	if len(items) == 0 {
 		fmt.Println("Quarantine is empty.")
 		return nil
@@ -347,13 +259,13 @@ func cmdRestore(args []string) error {
 	if len(args) == 0 {
 		return errors.New("usage: cachevent restore ID... (see `cachevent quarantine`)")
 	}
-	_, st, err := open()
+	s, err := newSession() // purges items past 14 days
 	if err != nil {
 		return err
 	}
 	var errs []error
 	for _, id := range args {
-		m, err := st.Restore(id)
+		m, err := s.store.Restore(id)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -368,11 +280,11 @@ func cmdPurge(args []string) error {
 	all := fs.Bool("all", false, "purge everything in quarantine now")
 	yes := fs.Bool("yes", false, "don't ask for confirmation")
 	fs.Parse(args)
-	_, st, err := open() // already purged items past 14 days
+	s, err := newSession() // purges items past 14 days
 	if err != nil || !*all {
 		return err
 	}
-	items := st.List()
+	items := s.store.List()
 	if len(items) == 0 {
 		fmt.Println("Quarantine is empty.")
 		return nil
@@ -380,7 +292,7 @@ func cmdPurge(args []string) error {
 	if !*yes && !confirm(fmt.Sprintf("Permanently delete %d quarantined items? This can't be undone.", len(items))) {
 		return nil
 	}
-	n, b, err := st.Purge(0)
+	n, b, err := s.store.Purge(0)
 	fmt.Printf("Purged %d items (%s).\n", n, human(b))
 	return err
 }

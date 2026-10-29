@@ -35,9 +35,9 @@ For things found anywhere (not at a fixed path), use `pattern` instead of `paths
     name: node_modules (per project)
     pattern:
       dir_name: node_modules
-      sibling: package.json            # only match next to this file
+      siblings: [package-lock.json, pnpm-lock.yaml, yarn.lock]   # only match next to one of these
     kind: dependencies
-    safety: regenerable
+    safety: redownloadable
     if_deleted: Run `npm install` (or pnpm / yarn) in the project to restore.
 ```
 
@@ -48,19 +48,23 @@ For things found anywhere (not at a fixed path), use `pattern` instead of `paths
 | `id` | yes | Unique, kebab-case, stable forever (history and quarantine refer to it) |
 | `name` | yes | What the user sees |
 | `paths` or `pattern` | yes | Where to find it. Use `%VAR%` on Windows and `~` elsewhere |
-| `kind` | yes | `model`, `cache`, `dependencies`, `build-output`, `logs`, `session-history`, `virtual-disk`, `user-data` |
+| `pattern.siblings` | no | Match only next to one of these files or folders. Pick something that marks a real project (a lockfile, not just `package.json`) |
+| `kind` | yes | `model`, `cache`, `dependencies`, `build-output`, `logs`, `session-history`, `virtual-disk`, `user-data`, `temp` |
 | `safety` | yes | See below |
 | `if_deleted` | yes | One plain sentence: what the user loses and how to get it back |
 | `env_override` | no | An environment variable that relocates the folder |
 | `dedupe` | no | `true` only for read-only model weights |
-| `verified` | yes | Who checked it, when, against which version, and the source |
+| `clean_older_than_days` | no | Clean only the top-level children untouched for this many days, not the whole folder (temp folders) |
+| `verified` | yes, unless `unknown` | Who checked it, when, against which version, and the source. `source` is required for `regenerable` and `redownloadable`. `by: draft` means taken from docs and not yet checked on a real install |
+
+Loading fails on unknown fields, so typos don't pass silently. `go test ./internal/defs` validates every shipped file.
 
 ## Safety levels
 
 | Level | Meaning | Example |
 |---|---|---|
-| `regenerable` | Rebuilt automatically or with one command, offline | `node_modules`, `__pycache__`, `target/` |
-| `redownloadable` | Comes back, but needs a download (possibly large) | Ollama models, pip cache |
+| `regenerable` | Rebuilt automatically or with one command, offline | `__pycache__`, `target/` |
+| `redownloadable` | Comes back, but needs a download (possibly large) | Ollama models, pip cache, `node_modules` |
 | `user-data` | Contains something only the user has. **Never suggested for cleaning.** | Claude Code session history, ComfyUI outputs |
 | `unknown` | Not yet verified. Shown, never suggested for cleaning | Anything new |
 
@@ -75,22 +79,25 @@ When in doubt, use `unknown`. A conservative label costs a few GB; a wrong one c
 
 ## Starter set (phase 1)
 
-All paths still need verifying before they ship.
+All entries are `by: draft`: sourced from docs, not yet checked on a real install. Anything without an official source is `unknown`.
 
-| Tool | Entries |
-|---|---|
-| Ollama | models |
-| LM Studio | models |
-| Hugging Face | hub cache |
-| ComfyUI | models, outputs (`user-data`) |
-| Stable Diffusion WebUI / Forge | models |
-| Claude Code | session history (`user-data`), shell snapshots, todos |
-| Claude Desktop | app caches |
-| Codex CLI | sessions (`user-data`) |
-| Cursor | Cache / CachedData, workspace storage |
-| VS Code | Cache / CachedData, extensions |
-| Antigravity | caches (paths to be researched) |
-| npm / pnpm / yarn | global caches and stores |
-| pip / uv | caches |
-| Docker Desktop / WSL | virtual disks |
-| Per-project | `node_modules`, `.venv`, `target/`, `.gradle`, `__pycache__` |
+| Tool | Entries | Status |
+|---|---|---|
+| Ollama | models | done |
+| LM Studio | models (`unknown`: imported models can't be re-downloaded) | done |
+| Hugging Face | hub cache | done |
+| ComfyUI | models (`unknown`), outputs (`user-data`) | done |
+| Stable Diffusion WebUI / Forge | models (`unknown`) | done |
+| Claude Code | session history (`user-data`), shell snapshots, todos | done |
+| Claude Desktop | app caches | done |
+| Codex CLI | sessions (`user-data`) | done |
+| Cursor | Cache / CachedData, workspace storage (`user-data`) | done |
+| VS Code | Cache / CachedData, extensions | done |
+| Antigravity | caches | paths to be researched |
+| npm / pnpm / yarn | caches and stores (pnpm `unknown`) | done |
+| pip / uv | caches | done |
+| Docker Desktop | virtual disk (`user-data`) | done |
+| WSL | distro virtual disks | needs wildcard paths |
+| Windows | user temp folder (7-day rule) | done |
+| Per-project | `node_modules`, `target/`, `.gradle`, `__pycache__` | done |
+| Python environments | venv, pipenv, poetry, conda | in `internal/envs`, not YAML |

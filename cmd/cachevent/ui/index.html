@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cache Vent</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #fff; --text: #1b1f24; --muted: #5f6b7a; --line: #e3e7ec;
+  --accent: #2563eb; --accent-text: #fff; --ok: #15803d; --ok-bg: #e7f6ec; --warn: #a16207; --warn-bg: #fdf4dc;
+  --bad: #b91c1c; --bad-bg: #fde8e8; --gray-bg: #eef1f4; --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111418; --panel: #1a1e24; --text: #e6e9ed; --muted: #97a3b1; --line: #2b313a;
+    --accent: #4f8cff; --ok: #4ade80; --ok-bg: #12301d; --warn: #facc15; --warn-bg: #33290b;
+    --bad: #f87171; --bad-bg: #3a1515; --gray-bg: #232931;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
+header { display: flex; gap: 16px; align-items: center; padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+header h1 { font-size: 17px; margin: 0; }
+header .sub { color: var(--muted); font-size: 12px; }
+.grow { flex: 1; }
+input[type=text] { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; min-width: 0; }
+#roots { width: min(420px, 100%); font-family: var(--mono); font-size: 12px; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button.danger { color: var(--bad); }
+button:disabled { opacity: .5; cursor: default; }
+main { padding: 16px 20px 90px; max-width: 1200px; margin: 0 auto; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.card b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.card span { color: var(--muted); font-size: 12px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--muted); }
+.tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
+.filters { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+.list { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.row { display: grid; grid-template-columns: 28px 90px 1fr 120px 80px; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--line); cursor: pointer; }
+.row:first-child { border-top: 0; }
+.row:hover { background: var(--gray-bg); }
+.size { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.name { min-width: 0; }
+.path { font-family: var(--mono); font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.age { color: var(--muted); font-size: 12px; text-align: right; }
+.badge { font-size: 11.5px; padding: 2px 8px; border-radius: 99px; justify-self: start; white-space: nowrap; }
+.b-regenerable, .b-redownloadable { color: var(--ok); background: var(--ok-bg); }
+.b-unknown { color: var(--warn); background: var(--warn-bg); }
+.b-user-data { color: var(--bad); background: var(--bad-bg); }
+.tag { font-size: 11px; font-weight: 600; color: var(--bad); margin-left: 6px; }
+.details { padding: 4px 12px 14px 140px; border-top: 1px dashed var(--line); font-size: 13px; }
+.details p { margin: 8px 0; }
+.details table { border-collapse: collapse; font-size: 12.5px; }
+.details td { padding: 2px 14px 2px 0; }
+.details td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+a { color: var(--accent); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-top: 16px; font-size: 13px; }
+.panel h3 { margin: 0 0 8px; font-size: 13px; }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 12px; align-items: center; justify-content: flex-end; padding: 12px 20px; background: var(--panel); border-top: 1px solid var(--line); }
+.empty { padding: 40px; text-align: center; color: var(--muted); }
+dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); max-width: min(720px, 92vw); width: 100%; padding: 18px; }
+dialog::backdrop { background: rgb(0 0 0 / .45); }
+dialog h2 { margin: 0 0 10px; font-size: 16px; }
+dialog .targets { max-height: 45vh; overflow: auto; font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin: 10px 0; }
+dialog .actions { display: flex; gap: 8px; justify-content: flex-end; }
+#toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 9px 14px; border-radius: 8px; font-size: 13px; max-width: 90vw; display: none; z-index: 10; }
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: s 1s linear infinite; vertical-align: -2px; margin-right: 6px; }
+@keyframes s { to { transform: rotate(360deg); } }
+@media (max-width: 720px) {
+  .row { grid-template-columns: 28px 80px 1fr; }
+  .row .badge, .row .age { display: none; }
+  .details { padding-left: 12px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Cache Vent</h1><div class="sub">What AI and dev tools store on your disk, and what's safe to remove</div></div>
+  <div class="grow"></div>
+  <input type="text" id="roots" title="Folders to search for projects and environments, separated by ;" aria-label="Folders to search">
+  <button class="primary" id="scan">Scan</button>
+</header>
+<main>
+  <div class="cards">
+    <div class="card"><b id="c-total">–</b><span>found</span></div>
+    <div class="card"><b id="c-clean">–</b><span>safe to move to quarantine</span></div>
+    <div class="card"><b id="c-quar">–</b><span>in quarantine</span></div>
+    <div class="card"><b id="c-when">–</b><span>last scan</span></div>
+  </div>
+  <div class="tabs">
+    <button id="t-disk" class="on">On disk</button>
+    <button id="t-quar">Quarantine</button>
+  </div>
+  <section id="disk">
+    <div class="filters">
+      <label><input type="checkbox" id="f-clean"> Only cleanable</label>
+      <label><input type="checkbox" id="f-small" checked> Hide under 10 MB</label>
+      <input type="text" id="f-text" placeholder="Filter by name or path" aria-label="Filter">
+    </div>
+    <div class="list" id="items"></div>
+    <div id="shared"></div>
+    <div id="warnings"></div>
+  </section>
+  <section id="quar" hidden>
+    <div class="list" id="qitems"></div>
+    <p class="muted" id="qnote"></p>
+    <button class="danger" id="purge">Empty quarantine now…</button>
+  </section>
+</main>
+<div class="bar" id="bar" hidden>
+  <span id="sel"></span>
+  <button id="clear">Clear</button>
+  <button class="primary" id="move">Move to quarantine…</button>
+</div>
+<dialog id="dlg">
+  <h2 id="d-title"></h2>
+  <div id="d-body"></div>
+  <div class="actions"><button id="d-no">Cancel</button><button class="primary" id="d-yes"></button></div>
+</dialog>
+<div id="toast" role="status"></div>
+<script>
+"use strict";
+const token = location.hash.slice(1);
+const $ = (id) => document.getElementById(id);
+let state = null, lastKey = "", selected = new Set(), open = new Set();
+
+// h builds elements; strings always become text nodes, never HTML.
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : String(kid));
+  return el;
+}
+
+function human(n) {
+  if (n < 1024) return n + " B";
+  const u = "KMGTPE"; let i = -1;
+  do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+  return n.toFixed(1) + " " + u[i] + "B";
+}
+function ago(t) {
+  if (!t) return "–";
+  const d = Math.floor((Date.now() - new Date(t)) / 864e5);
+  return d <= 0 ? "today" : d + "d ago";
+}
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = "none", 6000);
+}
+
+async function api(path, body) {
+  const r = await fetch(path, {
+    method: body === undefined ? "GET" : "POST",
+    headers: { "X-Token": token, "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error((await r.text()).trim() || r.statusText);
+  return r.status === 202 ? null : r.json();
+}
+
+function ask(title, body, yes) {
+  return new Promise((resolve) => {
+    $("d-title").textContent = title;
+    $("d-body").replaceChildren(body);
+    $("d-yes").textContent = yes;
+    const dlg = $("dlg");
+    $("d-yes").onclick = () => { dlg.close(); resolve(true); };
+    $("d-no").onclick = () => { dlg.close(); resolve(false); };
+    dlg.oncancel = () => resolve(false);
+    dlg.showModal();
+  });
+}
+
+async function refresh() {
+  try { state = await api("/api/state"); } catch (e) { toast("Lost connection to Cache Vent: " + e.message); return; }
+  if (!$("roots").value && state.home) $("roots").value = (state.scan?.roots || [state.home]).join("; ");
+  const scanning = state.scanning;
+  $("scan").disabled = scanning;
+  $("scan").replaceChildren(...(scanning ? [h("span", { class: "spin" }), "Scanning… " + state.found + " found"] : ["Scan"]));
+  if (state.scan_error) toast(state.scan_error);
+  const key = (state.scan?.scanned_at || "") + "|" + state.quarantine.length + "|" + scanning;
+  if (key !== lastKey) { lastKey = key; render(); }
+  clearTimeout(refresh.t);
+  refresh.t = setTimeout(refresh, scanning ? 1000 : 5000);
+}
+
+function visibleItems() {
+  const items = state.scan?.items || [];
+  const q = $("f-text").value.trim().toLowerCase();
+  return items.filter((it) =>
+    (!$("f-clean").checked || it.cleanable) &&
+    (!$("f-small").checked || it.bytes >= 10 << 20 || selected.has(it.path)) &&
+    (!q || (it.name + " " + it.path).toLowerCase().includes(q)));
+}
+
+function render() {
+  const items = state.scan?.items || [];
+  const sum = (xs) => xs.reduce((a, it) => a + it.bytes, 0);
+  $("c-total").textContent = state.scan ? human(sum(items)) : "–";
+  $("c-clean").textContent = state.scan ? human(sum(items.filter((i) => i.cleanable))) : "–";
+  $("c-quar").textContent = human(sum(state.quarantine));
+  $("c-when").textContent = state.scan ? ago(state.scan.scanned_at) : "never";
+  $("t-quar").textContent = "Quarantine (" + state.quarantine.length + ")";
+  // Drop selections that no longer exist after a rescan or clean.
+  const paths = new Set(items.filter((i) => i.cleanable).map((i) => i.path));
+  for (const p of selected) if (!paths.has(p)) selected.delete(p);
+  renderItems(); renderShared(); renderQuarantine(); renderBar();
+}
+
+function renderItems() {
+  const list = $("items");
+  if (!state.scan) { list.replaceChildren(h("div", { class: "empty" }, state.scanning ? "Scanning…" : "Press Scan to see what's on your disk.")); return; }
+  const rows = visibleItems().map((it) => {
+    const why = it.cleanable ? "" : it.safety === "user-data" ? "Your data: never cleaned" : it.safety === "unknown" ? "Not verified yet: never cleaned" : "Nothing to clean";
+    const box = h("input", { type: "checkbox", disabled: !it.cleanable, checked: selected.has(it.path), title: why || "Select to move to quarantine", "aria-label": "Select " + it.name,
+      onclick: (e) => e.stopPropagation(), onchange: (e) => { e.target.checked ? selected.add(it.path) : selected.delete(it.path); renderBar(); } });
+    const row = h("div", { class: "row", onclick: () => { open.has(it.path) ? open.delete(it.path) : open.add(it.path); renderItems(); } },
+      box,
+      h("div", { class: "size" }, human(it.bytes)),
+      h("div", { class: "name" }, h("div", {}, it.name, it.env?.orphaned ? h("span", { class: "tag" }, "ORPHANED") : null), h("div", { class: "path", title: it.path }, it.path)),
+      h("span", { class: "badge b-" + it.safety }, it.safety),
+      h("div", { class: "age", title: "last modified" }, ago(it.last_used)));
+    return open.has(it.path) ? [row, details(it)] : [row];
+  }).flat();
+  list.replaceChildren(...(rows.length ? rows : [h("div", { class: "empty" }, "Nothing matches the filters.")]));
+}
+
+function details(it) {
+  const src = /^https?:\/\//.test(it.source || "") ? h("a", { href: it.source, target: "_blank", rel: "noopener" }, it.source) : null;
+  const env = it.env;
+  return h("div", { class: "details" },
+    h("p", {}, it.if_deleted),
+    env?.project ? h("p", {}, "Project: ", h("span", { class: "path" }, env.project), env.orphaned ? " (no longer exists)" : "") : null,
+    env?.packages?.length ? h("table", {}, env.packages.slice(0, 12).map((p) =>
+      h("tr", {}, h("td", {}, p.name), h("td", { class: "muted" }, p.version), h("td", { class: "n" }, human(p.bytes)),
+        h("td", { class: "muted" }, p.other_envs ? "same version in " + p.other_envs + " other env(s)" : "")))) : null,
+    h("p", { class: "muted" }, "Source: ", src || "none (that's why it's not marked safe)"));
+}
+
+function renderShared() {
+  const byKey = new Map();
+  for (const it of state.scan?.items || []) for (const p of it.env?.packages || []) {
+    if (!p.other_envs) continue;
+    const k = p.name + " " + p.version, d = byKey.get(k) || { k, bytes: 0, envs: 0 };
+    d.bytes += p.bytes; d.envs++; byKey.set(k, d);
+  }
+  const dups = [...byKey.values()].filter((d) => d.bytes - d.bytes / d.envs >= 50 << 20).sort((a, b) => b.bytes - a.bytes).slice(0, 10);
+  $("shared").replaceChildren(...(dups.length ? [h("div", { class: "panel" },
+    h("h3", {}, "Same package installed in several environments"),
+    h("table", {}, dups.map((d) => h("tr", {}, h("td", {}, d.k), h("td", { class: "muted" }, d.envs + " envs"), h("td", {}, human(d.bytes) + " total")))),
+    h("p", { class: "muted" }, "uv keeps one shared copy across environments: ", h("a", { href: "https://docs.astral.sh/uv/concepts/cache/", target: "_blank", rel: "noopener" }, "docs.astral.sh/uv")))] : []));
+  const w = state.scan?.warnings || [];
+  $("warnings").replaceChildren(...(w.length ? [h("div", { class: "panel muted" }, h("h3", {}, "Notes"), w.map((x) => h("div", {}, x)))] : []));
+}
+
+function renderQuarantine() {
+  const q = state.quarantine;
+  $("qnote").textContent = "Items are moved, not deleted, and are purged automatically after " + state.max_age_days + " days.";
+  $("purge").disabled = !q.length;
+  if (!q.length) { $("qitems").replaceChildren(h("div", { class: "empty" }, "Quarantine is empty.")); return; }
+  $("qitems").replaceChildren(...q.map((m) => {
+    const left = Math.max(0, Math.ceil((new Date(m.quarantined_at).getTime() + state.max_age_days * 864e5 - Date.now()) / 864e5));
+    return h("div", { class: "row", style: "cursor:default" },
+      h("span"), h("div", { class: "size" }, human(m.bytes)),
+      h("div", { class: "name" }, h("div", {}, m.definition_id), h("div", { class: "path", title: m.original_path }, m.original_path)),
+      h("div", { class: "age" }, "purged in " + left + "d"),
+      h("button", { onclick: () => restore(m) }, "Restore"));
+  }));
+}
+
+function renderBar() {
+  const items = (state.scan?.items || []).filter((i) => selected.has(i.path));
+  $("bar").hidden = !items.length;
+  $("sel").textContent = items.length + " selected · " + human(items.reduce((a, i) => a + i.bytes, 0));
+}
+
+async function startScan() {
+  const roots = $("roots").value.split(";").map((s) => s.trim()).filter(Boolean);
+  try { await api("/api/scan", { roots }); lastKey = ""; clearTimeout(refresh.t); refresh(); } catch (e) { toast(e.message); }
+}
+
+async function moveSelected() {
+  const paths = [...selected];
+  let targets;
+  try { targets = await api("/api/plan", { paths }); } catch (e) { toast(e.message); return; }
+  if (!targets.length) { toast("Nothing old enough to move."); return; }
+  const total = targets.reduce((a, t) => a + t.Bytes, 0);
+  const body = h("div", {},
+    h("p", {}, "These will be moved to quarantine. Nothing is deleted; you can restore them for " + state.max_age_days + " days."),
+    h("div", { class: "targets" }, targets.map((t) => h("div", {}, human(t.Bytes).padStart(9, " ") + "  " + t.Path))));
+  if (!await ask("Move " + targets.length + " item(s), " + human(total) + "?", body, "Move to quarantine")) return;
+  try {
+    const r = await api("/api/clean", { paths });
+    selected.clear(); lastKey = "";
+    toast("Moved " + human(r.bytes) + " to quarantine." + (r.failed.length ? " " + r.failed.length + " skipped: " + r.failed[0] : ""));
+    refresh();
+  } catch (e) { toast(e.message); }
+}
+
+async function restore(m) {
+  try { await api("/api/restore", { ids: [m.id] }); toast("Restored " + m.original_path + ". Scan again to see it."); lastKey = ""; refresh(); }
+  catch (e) { toast(e.message); }
+}
+
+async function purgeAll() {
+  const total = state.quarantine.reduce((a, m) => a + m.bytes, 0);
+  if (!await ask("Permanently delete " + human(total) + "?", h("p", {}, "This empties the quarantine now instead of waiting. It can't be undone."), "Delete permanently")) return;
+  try { const r = await api("/api/purge", {}); toast("Freed " + human(r.bytes) + "."); lastKey = ""; refresh(); } catch (e) { toast(e.message); }
+}
+
+function tab(name) {
+  $("disk").hidden = name !== "disk"; $("quar").hidden = name !== "quar";
+  $("t-disk").classList.toggle("on", name === "disk"); $("t-quar").classList.toggle("on", name === "quar");
+}
+
+$("scan").onclick = startScan;
+$("roots").onkeydown = (e) => { if (e.key === "Enter") startScan(); };
+$("move").onclick = moveSelected;
+$("clear").onclick = () => { selected.clear(); renderItems(); renderBar(); };
+$("purge").onclick = purgeAll;
+$("t-disk").onclick = () => tab("disk");
+$("t-quar").onclick = () => tab("quar");
+for (const id of ["f-clean", "f-small"]) $(id).onchange = renderItems;
+$("f-text").oninput = renderItems;
+refresh();
+</script>
+</body>
+</html>

@@ -208,6 +208,12 @@ func PathKey(p string) string {
 	return p
 }
 
+// Within reports whether path is dir or inside it.
+func Within(path, dir string) bool {
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel)
+}
+
 // DataDir is where Cache Vent keeps its own files (last scan, history, quarantine).
 func DataDir() (string, error) {
 	switch runtime.GOOS {

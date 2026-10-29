@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"cachevent/internal/defs"
@@ -42,6 +43,14 @@ type Options struct {
 	Envs  []envs.Found // central environments (poetry, pipenv, conda)
 	Roots []string     // searched for pattern entries and in-project environments
 	Skip  []string     // never descended during the root search
+	// Progress, if set, is called with the number of items found so far.
+	Progress func(found int)
+}
+
+// neverWalk are folder names the root search never enters: our own quarantine
+// (its contents would show up as cleanable again) and OS-managed folders.
+var neverWalk = map[string]bool{
+	".cachevent-quarantine": true, "$recycle.bin": true, "system volume information": true,
 }
 
 func Run(opt Options) Result {
@@ -51,6 +60,9 @@ func Run(opt Options) Result {
 		it.Bytes, it.LastUsed = s.size(it.Path)
 		it.Cleanable = defs.Cleanable(it.Safety) && it.Bytes > 0
 		res.Items = append(res.Items, it)
+		if opt.Progress != nil {
+			opt.Progress(len(res.Items))
+		}
 	}
 	claimed := map[string]bool{} // measured already; the root search skips these
 	claim := func(p string) bool {
@@ -100,7 +112,7 @@ func Run(opt Options) Result {
 				return nil
 			}
 			k := defs.PathKey(path)
-			if claimed[k] || skip[k] {
+			if claimed[k] || skip[k] || neverWalk[strings.ToLower(d.Name())] {
 				return filepath.SkipDir
 			}
 			if envs.IsVenv(path) {

@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"cachevent/internal/defs"
+	"cachevent/internal/envs"
 	"cachevent/internal/scan"
 )
 
@@ -44,8 +46,17 @@ func Plan(last scan.Result, entries []defs.Entry, paths []string, now time.Time)
 		if !it.Cleanable || (isDef && !defs.Cleanable(e.Safety)) {
 			return nil, fmt.Errorf("%s: %s, never cleaned", p, it.Safety)
 		}
+		// The scan may be old: re-check what an environment looks like now.
+		if it.Env != nil {
+			if v := envs.Inspect(abs, it.Env.Manager); !defs.Cleanable(v.Safety) {
+				return nil, fmt.Errorf("%s: now %s (%s)", p, v.Safety, v.IfDeleted)
+			}
+		}
 		if protected(abs) {
-			return nil, fmt.Errorf("%s: refusing to move a home folder or drive root", p)
+			return nil, fmt.Errorf("%s: refusing to move a home folder, drive root, or anything holding Cache Vent's data", p)
+		}
+		if sync := syncedFolder(abs); sync != "" {
+			return nil, fmt.Errorf("%s: inside the synced folder %s; moving it would delete it on every synced device", p, sync)
 		}
 		fi, err := os.Lstat(abs)
 		if err != nil {
@@ -86,7 +97,7 @@ func oldChildren(dir, id string, cutoff time.Time) ([]Target, error) {
 	return out, nil
 }
 
-// protected is true for drive roots, the home folder, and its ancestors.
+// protected is true for drive roots, and for the home folder, the data dir and anything containing them.
 func protected(p string) bool {
 	if filepath.Dir(p) == p {
 		return true
@@ -95,13 +106,36 @@ func protected(p string) bool {
 	if err != nil {
 		return true
 	}
-	k := defs.PathKey(p)
-	for h := home; ; h = filepath.Dir(h) {
-		if defs.PathKey(h) == k {
-			return true
-		}
-		if filepath.Dir(h) == h {
-			return false
+	dd, err := defs.DataDir()
+	if err != nil {
+		return true
+	}
+	return defs.Within(home, p) || defs.Within(dd, p)
+}
+
+// syncedFolder returns the cloud-sync folder holding p, or "". Matching by folder
+// name can refuse a folder that only looks synced; refusing is the safe mistake.
+func syncedFolder(p string) string {
+	var roots []string
+	for _, v := range []string{"OneDrive", "OneDriveConsumer", "OneDriveCommercial"} {
+		if d := os.Getenv(v); d != "" {
+			roots = append(roots, d)
 		}
 	}
+	if home, err := os.UserHomeDir(); err == nil {
+		roots = append(roots, filepath.Join(home, "Library", "CloudStorage"), filepath.Join(home, "Library", "Mobile Documents"))
+	}
+	for _, r := range roots {
+		if defs.Within(p, r) {
+			return r
+		}
+	}
+	for dir := p; filepath.Dir(dir) != dir; dir = filepath.Dir(dir) {
+		switch name := strings.ToLower(filepath.Base(dir)); {
+		case name == "dropbox", name == "google drive", name == "my drive", name == "icloud drive", name == "iclouddrive",
+			strings.HasPrefix(name, "onedrive"):
+			return dir
+		}
+	}
+	return ""
 }

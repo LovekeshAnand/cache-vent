@@ -14,15 +14,20 @@ Dependencies stay minimal: a YAML parser for definitions, and an MCP SDK in phas
 ## Layout
 
 ```
-cmd/Cache Vent/     main.go: CLI entry (scan, dedupe, clean, restore, ui, mcp)
-internal/scan/      walk the disk, sum sizes, match folders to definitions
-internal/defs/      load and validate definitions
-internal/dedupe/    find identical files, hardlink them
+cmd/cachevent/       main.go: CLI entry (scan, clean, quarantine, restore, purge)
+internal/defs/       load and validate definitions, OS path expansion, data dir
+internal/scan/       walk the disk, sum bytes on disk, match folders to definitions
+internal/envs/       Python environment analyzer: owner project, orphans, packages
+internal/clean/      decide what may be quarantined (only cleanable items from the last scan)
 internal/quarantine/ move, restore, purge, manifest
-definitions/        one YAML file per tool (community-editable)
+definitions/         one YAML file per tool (community-editable), embedded in the binary
 ```
 
-New packages are added only when a phase needs them.
+`cmd/cachevent/app.go` holds the scan → save → plan → move flow, which the CLI and the UI both use, so they can't drift apart on safety. `ui.go` + `ui/index.html` are the desktop app: an HTTP server on 127.0.0.1 with a random port, shown in an Edge/Chrome `--app` window with its own profile. Every request must carry a per-launch random token (passed in the URL fragment) and the exact `127.0.0.1:port` Host header, so neither other websites nor DNS rebinding can drive it. The page is vanilla JS with no build step, and it inserts every file name as text, never as HTML. If the window feels too much like a browser, swap the shell for WebView2 (`go-webview2`) without touching the server.
+
+Planned: `internal/dedupe/` (phase 2). New packages are added only when a phase needs them.
+
+**Environment analyzer.** Some things can't be described in YAML: who owns a virtual environment, and whether that owner still exists. `internal/envs` handles them and produces items shaped like definition items, with these stable IDs: `python-venv` (in-project, any folder with `pyvenv.cfg`), `pipenv-env`, `poetry-env`, `conda-env`. The verdict is always for the whole environment. Single packages are never removed, because that breaks whatever depends on them. Package sizes come from each `*.dist-info/RECORD`, and the same `name==version` found in several environments is reported as shared.
 
 ## Data flow
 

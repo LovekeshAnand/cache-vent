@@ -13,6 +13,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"cachevent/internal/defs"
 )
 
 const (
@@ -51,9 +53,12 @@ func (s Store) Move(path, definitionID string, bytes int64) (Manifest, error) {
 	if fi.Mode()&(fs.ModeSymlink|fs.ModeIrregular) != 0 {
 		return Manifest{}, fmt.Errorf("%s is a link or junction; not moving it", path)
 	}
-	for _, r := range s.roots() {
-		if within(path, r) {
-			return Manifest{}, fmt.Errorf("%s is already in quarantine", path)
+	for _, r := range append(s.Roots(), s.DataDir) {
+		if defs.Within(path, r) {
+			return Manifest{}, fmt.Errorf("%s is inside Cache Vent's own folders", path)
+		}
+		if defs.Within(r, path) {
+			return Manifest{}, fmt.Errorf("%s contains Cache Vent's own folders; not moving it", path)
 		}
 	}
 	if err := os.MkdirAll(s.home(), 0o755); err != nil {
@@ -84,7 +89,8 @@ func (s Store) Move(path, definitionID string, bytes int64) (Manifest, error) {
 	if err := os.Rename(path, filepath.Join(dir, payloadName)); err != nil {
 		os.Remove(filepath.Join(dir, manifestName))
 		os.Remove(dir)
-		return Manifest{}, err
+		// A rename either moves everything or nothing, so a file in use leaves the item intact.
+		return Manifest{}, fmt.Errorf("%s couldn't be moved; close any program using it and retry: %w", path, err)
 	}
 	return m, nil
 }
@@ -92,7 +98,7 @@ func (s Store) Move(path, definitionID string, bytes int64) (Manifest, error) {
 // List returns quarantined items, oldest first.
 func (s Store) List() []Manifest {
 	out := []Manifest{}
-	for _, root := range s.roots() {
+	for _, root := range s.Roots() {
 		ents, _ := os.ReadDir(root)
 		for _, e := range ents {
 			if !e.IsDir() {
@@ -147,6 +153,11 @@ func (s Store) Purge(olderThan time.Duration) (n int, bytes int64, err error) {
 		if olderThan > 0 && time.Since(m.QuarantinedAt) < olderThan {
 			continue
 		}
+		// Payload first: if this fails halfway, the manifest keeps the item listed and retried.
+		if e := os.RemoveAll(filepath.Join(m.Dir, payloadName)); e != nil {
+			errs = append(errs, e)
+			continue
+		}
 		if e := os.RemoveAll(m.Dir); e != nil {
 			errs = append(errs, e)
 			continue
@@ -166,8 +177,8 @@ func (s Store) find(id string) (Manifest, error) {
 	return Manifest{}, fmt.Errorf("%s: not in quarantine", id)
 }
 
-// roots is the data-dir quarantine plus every per-volume one used so far.
-func (s Store) roots() []string {
+// Roots is the data-dir quarantine plus every per-volume one used so far.
+func (s Store) Roots() []string {
 	roots := []string{s.home()}
 	b, _ := os.ReadFile(filepath.Join(s.DataDir, rootsFile))
 	for _, line := range strings.Split(string(b), "\n") {
@@ -179,7 +190,7 @@ func (s Store) roots() []string {
 }
 
 func (s Store) remember(root string) error {
-	for _, r := range s.roots() {
+	for _, r := range s.Roots() {
 		if r == root {
 			return nil
 		}
@@ -191,11 +202,6 @@ func (s Store) remember(root string) error {
 	defer f.Close()
 	_, err = fmt.Fprintln(f, root)
 	return err
-}
-
-func within(path, dir string) bool {
-	rel, err := filepath.Rel(dir, path)
-	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 func writeJSON(path string, v any) error {
