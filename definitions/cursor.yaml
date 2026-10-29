@@ -1,0 +1,24 @@
+tool: Cursor
+homepage: https://cursor.com
+entries:
+  - id: cursor-cache
+    name: Cursor app cache
+    paths:
+      windows: ['%APPDATA%\Cursor\Cache', '%APPDATA%\Cursor\CachedData']
+      macos: ["~/Library/Application Support/Cursor/Cache", "~/Library/Application Support/Cursor/CachedData"]
+      linux: ["~/.config/Cursor/Cache", "~/.config/Cursor/CachedData"]
+    kind: cache
+    safety: unknown
+    if_deleted: Probably rebuilt by the app; not yet verified.
+  - id: cursor-workspace-storage
+    name: Cursor workspace storage
+    paths:
+      windows: ['%APPDATA%\Cursor\User\workspaceStorage']
+      macos: ["~/Library/Application Support/Cursor/User/workspaceStorage"]
+      linux: ["~/.config/Cursor/User/workspaceStorage"]
+    kind: user-data
+    safety: user-data
+    if_deleted: Per-project state, including chat history, is lost.
+    verified:
+      by: draft
+      on: "2026-10-29"

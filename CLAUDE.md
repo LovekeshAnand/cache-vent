@@ -1,11 +1,11 @@
-# Bloatscope
+# Cache Vent
 
 Disk tool that explains what AI and dev tools store and what's safe to remove. Read [description.md](description.md) for the product, [ARCHITECTURE.md](ARCHITECTURE.md) for the design, and [DEFINITIONS.md](DEFINITIONS.md) for the definition format.
 
 ## Safety rules (non-negotiable)
 
 - Never delete anything. Cleaning means moving to quarantine (`internal/quarantine`), and only `purge` removes files from quarantine.
-- Scanning is read-only. Nothing outside the bloatscope data directory and quarantine folders may be written.
+- Scanning is read-only. Nothing outside the Cache Vent data directory and quarantine folders may be written.
 - Never follow symlinks or junctions while walking.
 - Never mark an entry `regenerable` or `redownloadable` without a source in `verified.source`. Default to `unknown`.
 - `user-data` and `unknown` entries are never suggested for cleaning.
@@ -21,7 +21,7 @@ Disk tool that explains what AI and dev tools store and what's safe to remove. R
 ## Commands
 
 ```
-go build ./cmd/bloatscope
+go build ./cmd/Cache Vent
 go test ./...
-go run ./cmd/bloatscope scan
+go run ./cmd/Cache Vent scan
 ```

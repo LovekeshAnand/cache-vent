@@ -1,0 +1,11 @@
+tool: Claude Desktop
+homepage: https://claude.ai/download
+entries:
+  - id: claude-desktop-cache
+    name: Claude Desktop app cache
+    paths:
+      windows: ['%APPDATA%\Claude\Cache', '%APPDATA%\Claude\Code Cache', '%APPDATA%\Claude\GPUCache']
+      macos: ["~/Library/Application Support/Claude/Cache", "~/Library/Application Support/Claude/Code Cache", "~/Library/Application Support/Claude/GPUCache"]
+    kind: cache
+    safety: unknown
+    if_deleted: Probably rebuilt by the app (Chromium cache); not yet verified.

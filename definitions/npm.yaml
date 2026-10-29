@@ -1,0 +1,30 @@
+tool: npm
+homepage: https://www.npmjs.com
+entries:
+  - id: npm-cache
+    name: npm package cache
+    paths:
+      windows: ['%LOCALAPPDATA%\npm-cache\_cacache']
+      macos: ["~/.npm/_cacache"]
+      linux: ["~/.npm/_cacache"]
+    kind: cache
+    safety: redownloadable
+    if_deleted: Packages download again on the next install.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://docs.npmjs.com/cli/v10/configuring-npm/folders#cache
+  - id: node-modules
+    name: node_modules (per project)
+    pattern:
+      dir_name: node_modules
+      # A lockfile marks a real project. Without one, npm install can't reproduce the folder,
+      # and package-only matches are often global installs or apps' bundled vendor folders.
+      siblings: [package-lock.json, npm-shrinkwrap.json, pnpm-lock.yaml, yarn.lock, bun.lock, bun.lockb]
+    kind: dependencies
+    safety: redownloadable
+    if_deleted: Run `npm install` (or pnpm / yarn) in the project to restore.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://docs.npmjs.com/cli/v10/commands/npm-install

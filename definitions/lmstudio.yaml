@@ -1,0 +1,13 @@
+tool: LM Studio
+homepage: https://lmstudio.ai
+entries:
+  - id: lmstudio-models
+    name: LM Studio models
+    paths:
+      windows: ['%USERPROFILE%\.lmstudio\models', '%USERPROFILE%\.cache\lm-studio\models']
+      macos: ["~/.lmstudio/models", "~/.cache/lm-studio/models"]
+      linux: ["~/.lmstudio/models", "~/.cache/lm-studio/models"]
+    kind: model
+    # Imported (side-loaded) models can't be re-downloaded; unknown until that's checked.
+    safety: unknown
+    if_deleted: Downloaded models can be fetched again; models you imported yourself are gone.

@@ -14,7 +14,7 @@ Dependencies stay minimal: a YAML parser for definitions, and an MCP SDK in phas
 ## Layout
 
 ```
-cmd/bloatscope/     main.go: CLI entry (scan, dedupe, clean, restore, ui, mcp)
+cmd/Cache Vent/     main.go: CLI entry (scan, dedupe, clean, restore, ui, mcp)
 internal/scan/      walk the disk, sum sizes, match folders to definitions
 internal/defs/      load and validate definitions
 internal/dedupe/    find identical files, hardlink them
@@ -55,11 +55,11 @@ definitions/*.yaml ──► defs.Load ──► expand paths for this OS
 - Only for read-only content types (model weights). Never for anything an app writes to in place.
 - Replace via a temp name and rename, so a crash never leaves a missing file.
 
-**Quarantine is a rename, not a copy.** The quarantine folder lives on the same volume as the item (`<volume>\.bloatscope-quarantine\`), so moving is instant and costs no extra space. A `manifest.json` per item records the original path, size, date, and definition ID. Purging happens at the start of the next run. There's no background service.
+**Quarantine is a rename, not a copy.** The quarantine folder lives on the same volume as the item (`<volume>\.Cache Vent-quarantine\`), so moving is instant and costs no extra space. A `manifest.json` per item records the original path, size, date, and definition ID. Purging happens at the start of the next run. There's no background service.
 
 **History is append-only JSONL.** One line per scan per definition: `{time, id, bytes}`. That's enough for "grew X this week." Move to SQLite only if queries get slow.
 
-**Data directory:** `%LOCALAPPDATA%\bloatscope` on Windows, `~/Library/Application Support/bloatscope` on macOS, `$XDG_DATA_HOME/bloatscope` on Linux.
+**Data directory:** `%LOCALAPPDATA%\Cache Vent` on Windows, `~/Library/Application Support/Cache Vent` on macOS, `$XDG_DATA_HOME/Cache Vent` on Linux.
 
 ## Output contract
 

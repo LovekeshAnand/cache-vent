@@ -1,0 +1,34 @@
+tool: Claude Code
+homepage: https://claude.com/claude-code
+entries:
+  - id: claude-code-sessions
+    name: Claude Code session history
+    paths:
+      windows: ['%USERPROFILE%\.claude\projects']
+      macos: ["~/.claude/projects"]
+      linux: ["~/.claude/projects"]
+    kind: session-history
+    safety: user-data
+    if_deleted: Past conversations can no longer be resumed or searched. Lower `cleanupPeriodDays` in settings to keep less.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://docs.claude.com/en/docs/claude-code/settings
+  - id: claude-code-shell-snapshots
+    name: Claude Code shell snapshots
+    paths:
+      windows: ['%USERPROFILE%\.claude\shell-snapshots']
+      macos: ["~/.claude/shell-snapshots"]
+      linux: ["~/.claude/shell-snapshots"]
+    kind: cache
+    safety: unknown
+    if_deleted: Not yet verified.
+  - id: claude-code-todos
+    name: Claude Code todo lists
+    paths:
+      windows: ['%USERPROFILE%\.claude\todos']
+      macos: ["~/.claude/todos"]
+      linux: ["~/.claude/todos"]
+    kind: session-history
+    safety: unknown
+    if_deleted: Not yet verified.

@@ -1,0 +1,18 @@
+tool: Ollama
+homepage: https://ollama.com
+entries:
+  - id: ollama-models
+    name: Ollama models
+    paths:
+      windows: ['%USERPROFILE%\.ollama\models']
+      macos: ["~/.ollama/models"]
+      linux: ["~/.ollama/models", "/usr/share/ollama/.ollama/models"]
+    env_override: OLLAMA_MODELS
+    kind: model
+    safety: redownloadable
+    if_deleted: Models must be pulled again with `ollama pull`. Models you built with `ollama create` from a local file need that file.
+    dedupe: true
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://github.com/ollama/ollama/blob/main/docs/faq.md

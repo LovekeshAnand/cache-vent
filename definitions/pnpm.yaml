@@ -1,0 +1,13 @@
+tool: pnpm
+homepage: https://pnpm.io
+entries:
+  - id: pnpm-store
+    name: pnpm content store
+    paths:
+      windows: ['%LOCALAPPDATA%\pnpm\store']
+      macos: ["~/Library/pnpm/store"]
+      linux: ["~/.local/share/pnpm/store"]
+    kind: cache
+    # Projects hardlink into the store; unknown until removing it outright is verified.
+    safety: unknown
+    if_deleted: Use `pnpm store prune` instead; removing the store outright isn't verified yet.

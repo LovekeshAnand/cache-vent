@@ -1,0 +1,21 @@
+tool: VS Code
+homepage: https://code.visualstudio.com
+entries:
+  - id: vscode-cache
+    name: VS Code app cache
+    paths:
+      windows: ['%APPDATA%\Code\Cache', '%APPDATA%\Code\CachedData', '%APPDATA%\Code\CachedExtensionVSIXs']
+      macos: ["~/Library/Application Support/Code/Cache", "~/Library/Application Support/Code/CachedData", "~/Library/Application Support/Code/CachedExtensionVSIXs"]
+      linux: ["~/.config/Code/Cache", "~/.config/Code/CachedData", "~/.config/Code/CachedExtensionVSIXs"]
+    kind: cache
+    safety: unknown
+    if_deleted: Probably rebuilt by the app; not yet verified.
+  - id: vscode-extensions
+    name: VS Code extensions
+    paths:
+      windows: ['%USERPROFILE%\.vscode\extensions']
+      macos: ["~/.vscode/extensions"]
+      linux: ["~/.vscode/extensions"]
+    kind: dependencies
+    safety: unknown
+    if_deleted: Installed extensions are removed and must be reinstalled.

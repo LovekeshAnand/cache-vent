@@ -1,0 +1,18 @@
+tool: Hugging Face
+homepage: https://huggingface.co
+entries:
+  - id: huggingface-hub-cache
+    name: Hugging Face model cache
+    paths:
+      windows: ['%USERPROFILE%\.cache\huggingface\hub']
+      macos: ["~/.cache/huggingface/hub"]
+      linux: ["~/.cache/huggingface/hub"]
+    env_override: HF_HUB_CACHE
+    kind: model
+    safety: redownloadable
+    if_deleted: Models and datasets download again the next time a program loads them.
+    dedupe: true
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://huggingface.co/docs/huggingface_hub/guides/manage-cache

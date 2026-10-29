@@ -1,0 +1,15 @@
+tool: Gradle
+homepage: https://gradle.org
+entries:
+  - id: gradle-project-cache
+    name: Gradle project cache (.gradle)
+    pattern:
+      dir_name: .gradle
+      siblings: [settings.gradle, settings.gradle.kts]
+    kind: cache
+    safety: regenerable
+    if_deleted: Gradle recreates it on the next build.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://docs.gradle.org/current/userguide/directory_layout.html

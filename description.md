@@ -1,4 +1,4 @@
-# Bloatscope (working name)
+# Cache Vent (working name)
 
 > See what every AI and dev tool is storing on your disk, what it is, and what's safe to delete.
 
@@ -59,8 +59,8 @@ The product is **correct explanations**. One wrong "safe to delete" label kills 
 | **2. Dedupe** | Find identical model files across apps and replace copies with hardlinks (same volume only) | Reclaims space and every app still loads the model |
 | **3. Quarantine** | `clean` moves items to quarantine, `restore`, auto-purge after 14 days | Restore puts back byte-identical files |
 | **4. Timeline** | Per-scan size history, "grew X this week" | Two scans show a diff |
-| **5. Local web UI** | `bloatscope ui` serves a local page from the same binary | Non-CLI users can use it |
-| **6. MCP server** | `bloatscope mcp` exposes scan / explain / quarantine as tools | Claude Code can call it |
+| **5. Local web UI** | `Cache Vent ui` serves a local page from the same binary | Non-CLI users can use it |
+| **6. MCP server** | `Cache Vent mcp` exposes scan / explain / quarantine as tools | Claude Code can call it |
 | **Later** | Read-only viewer for local agent memory and rules (`~/.claude`, `.cursor`, `AGENTS.md`) | Only if users ask |
 
 Windows first (the author's platform), with macOS and Linux paths in the definitions from day one.

@@ -1,0 +1,17 @@
+tool: uv
+homepage: https://docs.astral.sh/uv/
+entries:
+  - id: uv-cache
+    name: uv cache
+    paths:
+      windows: ['%LOCALAPPDATA%\uv\cache']
+      macos: ["~/.cache/uv"]
+      linux: ["~/.cache/uv"]
+    env_override: UV_CACHE_DIR
+    kind: cache
+    safety: redownloadable
+    if_deleted: Packages download again on the next install. Close anything running uv first, or use `uv cache clean`.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://docs.astral.sh/uv/concepts/cache/

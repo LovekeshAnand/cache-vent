@@ -1,0 +1,17 @@
+tool: Yarn (classic)
+homepage: https://classic.yarnpkg.com
+entries:
+  - id: yarn-cache
+    name: Yarn package cache
+    paths:
+      windows: ['%LOCALAPPDATA%\Yarn\Cache']
+      macos: ["~/Library/Caches/Yarn"]
+      linux: ["~/.cache/yarn"]
+    env_override: YARN_CACHE_FOLDER
+    kind: cache
+    safety: redownloadable
+    if_deleted: Packages download again on the next install.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://classic.yarnpkg.com/lang/en/docs/cli/cache/

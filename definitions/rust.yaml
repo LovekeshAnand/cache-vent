@@ -1,0 +1,15 @@
+tool: Rust (Cargo)
+homepage: https://doc.rust-lang.org/cargo/
+entries:
+  - id: cargo-target
+    name: Cargo build output (target/)
+    pattern:
+      dir_name: target
+      siblings: [Cargo.toml]
+    kind: build-output
+    safety: regenerable
+    if_deleted: Rebuilt by the next `cargo build` (slow for big projects).
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://doc.rust-lang.org/cargo/reference/build-cache.html

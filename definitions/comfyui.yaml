@@ -1,0 +1,23 @@
+tool: ComfyUI
+homepage: https://github.com/comfyanonymous/ComfyUI
+entries:
+  - id: comfyui-models
+    name: ComfyUI models
+    pattern:
+      dir_name: models
+      siblings: [comfy_extras]
+    kind: model
+    # May hold LoRAs or checkpoints the user trained; never assume they can be re-downloaded.
+    safety: unknown
+    if_deleted: Downloaded checkpoints can be fetched again; anything you trained or merged yourself is gone.
+  - id: comfyui-output
+    name: ComfyUI outputs
+    pattern:
+      dir_name: output
+      siblings: [comfy_extras]
+    kind: user-data
+    safety: user-data
+    if_deleted: Your generated images and videos are gone.
+    verified:
+      by: draft
+      on: "2026-10-29"

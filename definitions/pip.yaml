@@ -1,0 +1,17 @@
+tool: pip
+homepage: https://pip.pypa.io
+entries:
+  - id: pip-cache
+    name: pip cache
+    paths:
+      windows: ['%LOCALAPPDATA%\pip\Cache']
+      macos: ["~/Library/Caches/pip"]
+      linux: ["~/.cache/pip"]
+    env_override: PIP_CACHE_DIR
+    kind: cache
+    safety: redownloadable
+    if_deleted: Packages download (and wheels build) again on the next install.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://pip.pypa.io/en/stable/topics/caching/

@@ -1,0 +1,16 @@
+tool: Codex CLI
+homepage: https://github.com/openai/codex
+entries:
+  - id: codex-sessions
+    name: Codex CLI sessions
+    paths:
+      windows: ['%USERPROFILE%\.codex\sessions']
+      macos: ["~/.codex/sessions"]
+      linux: ["~/.codex/sessions"]
+    kind: session-history
+    safety: user-data
+    if_deleted: Past sessions can no longer be resumed.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://github.com/openai/codex

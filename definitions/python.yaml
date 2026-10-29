@@ -1,0 +1,14 @@
+tool: Python
+homepage: https://www.python.org
+entries:
+  - id: python-pycache
+    name: Python bytecode cache (__pycache__)
+    pattern:
+      dir_name: __pycache__
+    kind: cache
+    safety: regenerable
+    if_deleted: Python recompiles it automatically the next time the code runs.
+    verified:
+      by: draft
+      on: "2026-10-29"
+      source: https://docs.python.org/3/tutorial/modules.html#compiled-python-files

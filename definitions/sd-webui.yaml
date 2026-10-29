@@ -1,0 +1,11 @@
+tool: Stable Diffusion WebUI / Forge
+homepage: https://github.com/AUTOMATIC1111/stable-diffusion-webui
+entries:
+  - id: sd-webui-models
+    name: Stable Diffusion WebUI models
+    pattern:
+      dir_name: models
+      siblings: [webui.py]
+    kind: model
+    safety: unknown
+    if_deleted: Downloaded checkpoints can be fetched again; anything you trained or merged yourself is gone.

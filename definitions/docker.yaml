@@ -1,0 +1,14 @@
+tool: Docker Desktop
+homepage: https://www.docker.com/products/docker-desktop/
+entries:
+  - id: docker-desktop-disk
+    name: Docker Desktop virtual disk
+    paths:
+      windows: ['%LOCALAPPDATA%\Docker\wsl\disk', '%LOCALAPPDATA%\Docker\wsl\data']
+      macos: ["~/Library/Containers/com.docker.docker/Data/vms/0/data"]
+    kind: virtual-disk
+    safety: user-data
+    if_deleted: All images, containers and volumes are lost. Use `docker system prune` or Docker Desktop's clean-up instead.
+    verified:
+      by: draft
+      on: "2026-10-29"
