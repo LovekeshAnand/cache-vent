@@ -1,19 +1,25 @@
-# Push a tag like v0.2.0 to release that version everywhere:
-#   1. tests (Go unit tests, then scripts/e2e.sh on the built Linux binary)
-#   2. builds all six binaries stamped with the version, plus SHA256SUMS.txt and the install scripts
-#   3. publishes them as a GitHub Release with generated notes
-#   4. deploys the same files to cachevent.kelados.in (needs the CLOUDFLARE_API_TOKEN and
-#      CLOUDFLARE_ACCOUNT_ID repository secrets; skipped with a warning if they're missing)
+# Runs on every push to main:
+#   1. tests: Go unit tests, then scripts/e2e.sh on the freshly built Linux binary
+#   2. builds all six binaries (stamped with the version in VERSION), SHA256SUMS.txt,
+#      the install scripts and the website
+#   3. if VERSION holds a version with no release yet, publishes GitHub Release vX.Y.Z
+#      (tag included) with the binaries and generated notes
+#   4. deploys the website and downloads to cachevent.kelados.in (needs the
+#      CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets)
+# To release: change VERSION (e.g. 0.2.0), commit, push. Nothing else.
 name: Release
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
-concurrency: release
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -22,23 +28,35 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: { go-version-file: go.mod }
+      # Node 24 ships npm 11, the version that wrote site/package-lock.json.
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: site/package-lock.json
 
-      - name: Version from the tag
-        run: echo "CACHEVENT_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - name: Read VERSION
+        run: |
+          v=$(tr -d '[:space:]' < VERSION)
+          echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::VERSION must look like 1.2.3, got '$v'"; exit 1; }
+          echo "CACHEVENT_VERSION=$v" >> "$GITHUB_ENV"
+          if gh release view "v$v" >/dev/null 2>&1; then
+            echo "NEW_RELEASE=false" >> "$GITHUB_ENV"
+            echo "v$v is already released; this push updates the website only."
+          else
+            echo "NEW_RELEASE=true" >> "$GITHUB_ENV"
+            echo "v$v is new; this push publishes it."
+          fi
 
       - name: Go tests
         run: go vet ./... && go test ./...
 
-      - name: Build binaries, checksums, install scripts and the site
+      - name: Build binaries, checksums, install scripts and the website
         working-directory: site
         run: npm ci && npm run build
 
@@ -47,11 +65,10 @@ jobs:
           site/public/downloads/cachevent-linux-x64 version | grep -qx "cachevent $CACHEVENT_VERSION"
           sh scripts/e2e.sh site/public/downloads/cachevent-linux-x64
 
-      - name: Publish the GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Publish GitHub Release
+        if: env.NEW_RELEASE == 'true'
         run: |
-          gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "Cache Vent $CACHEVENT_VERSION" \
+          gh release create "v$CACHEVENT_VERSION" --target "$GITHUB_SHA" --generate-notes --title "Cache Vent $CACHEVENT_VERSION" \
             site/public/downloads/CacheVent-windows-x64.exe site/public/downloads/CacheVent-windows-arm64.exe \
             site/public/downloads/cachevent-macos-arm64 site/public/downloads/cachevent-macos-x64 \
             site/public/downloads/cachevent-linux-x64 site/public/downloads/cachevent-linux-arm64 \
@@ -60,8 +77,8 @@ jobs:
       - name: Deploy cachevent.kelados.in
         working-directory: site
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::warning::CLOUDFLARE_API_TOKEN is not set; the website was not updated. Run 'npm run deploy' in site/ yourself."
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID secret is missing; the website was not updated."
             exit 0
           fi
           npx wrangler d1 migrations apply cache-vent --remote

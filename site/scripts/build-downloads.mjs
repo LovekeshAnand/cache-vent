@@ -23,7 +23,8 @@ const targets = [
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 
-const version = process.env.CACHEVENT_VERSION || "0.1.0";
+// The release version lives in VERSION at the repo root; CACHEVENT_VERSION overrides it.
+const version = process.env.CACHEVENT_VERSION || readFileSync(join(repo, "VERSION"), "utf8").trim();
 // The install scripts download from this site, so they need its real address (override for staging).
 const base = (process.env.NEXT_PUBLIC_SITE_URL || "https://cachevent.kelados.in").replace(/\/$/, "");
 const files = targets.map((t) => {

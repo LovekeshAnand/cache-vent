@@ -170,6 +170,10 @@ The app icon is generated from `assets/logo.png` by `python assets/make_icon.py`
 
 Dependencies are kept minimal: `gopkg.in/yaml.v3`, plus `github.com/jchv/go-webview2` for the Windows window.
 
+## Releasing
+
+Every push to `main` runs `.github/workflows/release.yml`: Go tests, a build of all six binaries, the end-to-end check, and a deploy of [cachevent.kelados.in](https://cachevent.kelados.in). To publish a new version, change the number in `VERSION` and push; the workflow creates the `vX.Y.Z` tag and GitHub Release with the binaries and checksums. Deploying needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets.
+
 ## Contributing
 
 The most valuable contribution is a definition: what a tool stores, where, and a link proving what happens when it's removed. [DEFINITIONS.md](DEFINITIONS.md) describes the format. Bug reports are most useful with the output of `cachevent scan --json` for the affected item.
