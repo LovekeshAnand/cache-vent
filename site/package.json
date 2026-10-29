@@ -9,7 +9,8 @@
     "build:site": "next build",
     "lint": "eslint",
     "preview": "npm run build && wrangler dev",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler d1 migrations apply cache-vent --remote && wrangler deploy",
+    "stats": "node scripts/stats.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

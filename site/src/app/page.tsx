@@ -15,7 +15,7 @@ import type { ReactNode } from "react";
 import { DownloadButton } from "@/components/download-button";
 import { InstallTabs } from "@/components/install-tabs";
 import { Reveal, WordReveal } from "@/components/motion";
-import { files, href, mb, site, version } from "@/lib/site";
+import { author, files, href, mb, site, version } from "@/lib/site";
 
 /* ---------- content ---------- */
 
@@ -216,6 +216,8 @@ export default function Home() {
       description: site.description,
       downloadUrl: new URL(href(files[0]), site.url).toString(),
       license: "https://opensource.org/licenses/MIT",
+      codeRepository: site.github,
+      author: { "@type": "Person", name: author.name, email: author.email, sameAs: [author.github, author.x, author.linkedin] },
     },
     {
       "@context": "https://schema.org",

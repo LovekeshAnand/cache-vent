@@ -401,10 +401,18 @@ func appBrowsers() []string {
 		}
 		return out
 	case "darwin":
-		return []string{"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-			"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"}
+		// Any Chromium browser can show an app window; Safari can't, so it's the last resort (openBrowser).
+		home, _ := os.UserHomeDir()
+		var out []string
+		for _, dir := range []string{"/Applications", filepath.Join(home, "Applications")} {
+			for _, app := range []string{"Google Chrome", "Microsoft Edge", "Brave Browser", "Chromium", "Vivaldi"} {
+				out = append(out, filepath.Join(dir, app+".app", "Contents", "MacOS", app))
+			}
+		}
+		return out
 	}
-	return []string{"microsoft-edge", "google-chrome", "chromium", "chromium-browser"}
+	return []string{"google-chrome", "google-chrome-stable", "microsoft-edge", "microsoft-edge-stable",
+		"chromium", "chromium-browser", "brave-browser", "vivaldi-stable"}
 }
 
 func openBrowser(url string) {

@@ -69,7 +69,7 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 say "Downloading $file ..."
-fetch "$BASE/downloads/$file" "$tmp/cachevent"
+fetch "$BASE/downloads/$file?via=sh" "$tmp/cachevent"
 fetch "$BASE/downloads/SHA256SUMS.txt" "$tmp/sums"
 want=$(grep " $file\$" "$tmp/sums" | cut -d' ' -f1)
 [ -n "$want" ] || die "no checksum published for $file"

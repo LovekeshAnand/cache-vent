@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@/components/analytics";
 import { Footer } from "@/components/footer";
 import { Nav } from "@/components/nav";
-import { site } from "@/lib/site";
+import { author, site } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -13,6 +14,8 @@ export const metadata: Metadata = {
   title: { default: "Cache Vent · Free disk space your dev tools took", template: "%s · Cache Vent" },
   description: site.description,
   applicationName: site.name,
+  authors: [{ name: author.name, url: author.github }],
+  creator: author.name,
   keywords: ["disk cleanup", "node_modules", "python venv", "ollama models", "hugging face cache", "developer tools", "disk space"],
   alternates: { canonical: "/" },
   openGraph: {
@@ -22,7 +25,7 @@ export const metadata: Metadata = {
     description: site.description,
     url: "/",
   },
-  twitter: { card: "summary_large_image", title: "Cache Vent", description: site.description },
+  twitter: { card: "summary_large_image", title: "Cache Vent", description: site.description, creator: author.xHandle },
 };
 
 export const viewport: Viewport = { themeColor: "#ffffff", colorScheme: "light" };
@@ -43,6 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );

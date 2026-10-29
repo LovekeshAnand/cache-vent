@@ -2,6 +2,7 @@
 
 import { Check, Copy } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
+import { track } from "@/components/analytics";
 
 /** A one-line terminal command with a copy button. Scrolls sideways on narrow screens. */
 export function CopyCommand({ command, label }: { command: string; label: string }) {
@@ -19,6 +20,7 @@ export function CopyCommand({ command, label }: { command: string; label: string
       getSelection()?.addRange(r);
       return;
     }
+    track("copy_install_command", { command: label });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

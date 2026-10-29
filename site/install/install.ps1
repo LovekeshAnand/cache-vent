@@ -18,7 +18,7 @@ Write-Host "Downloading $file ..."
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ("cachevent-" + [Guid]::NewGuid())
 New-Item -ItemType Directory -Path $tmp | Out-Null
 try {
-  Invoke-WebRequest -UseBasicParsing -Uri "$base/downloads/$file" -OutFile "$tmp\$file"
+  Invoke-WebRequest -UseBasicParsing -Uri "$base/downloads/${file}?via=ps1" -OutFile "$tmp\$file"
   $sums = (Invoke-WebRequest -UseBasicParsing -Uri "$base/downloads/SHA256SUMS.txt").Content
   if ($sums -is [byte[]]) { $sums = [Text.Encoding]::UTF8.GetString($sums) }
   $line = $sums -split "`n" | Where-Object { $_.Trim().EndsWith(" $file") } | Select-Object -First 1

@@ -1,5 +1,6 @@
 "use client";
 
+import { GithubLogo } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { site } from "@/lib/site";
@@ -47,9 +48,19 @@ export function Nav() {
             </li>
           ))}
         </ul>
+        <a
+          href={site.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Cache Vent on GitHub"
+          title="Source code on GitHub"
+          className="ml-auto grid size-10 place-items-center rounded-lg text-ink transition-colors duration-300 ease-vent hover:bg-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vent md:ml-1"
+        >
+          <GithubLogo size={20} weight="fill" aria-hidden />
+        </a>
         <Link
           href="/#download"
-          className="ml-auto rounded-lg bg-ink px-3 py-2 text-sm font-semibold text-paper transition-transform duration-300 ease-vent hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vent focus-visible:ring-offset-2 md:ml-2"
+          className="rounded-lg bg-ink px-3 py-2 text-sm font-semibold text-paper transition-transform duration-300 ease-vent hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vent focus-visible:ring-offset-2"
         >
           Download
         </Link>
@@ -92,6 +103,13 @@ export function Nav() {
             </li>
           ))}
         </ul>
+        <a
+          href={site.github}
+          className="mt-8 inline-flex items-center gap-2 rounded-xl px-3 py-3 text-base font-semibold text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vent"
+        >
+          <GithubLogo size={20} weight="fill" aria-hidden />
+          Source code on GitHub
+        </a>
       </div>
     </header>
   );

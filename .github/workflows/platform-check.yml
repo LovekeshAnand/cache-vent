@@ -1,0 +1,86 @@
+# Installs Cache Vent on real macOS (Apple silicon and Intel) and Linux machines exactly the
+# way users do (curl | sh), then checks the signature, launches the app and runs scripts/e2e.sh.
+# Run it from the Actions tab. By default it builds this commit and installs from a local
+# copy of the site; give `site` (e.g. https://cachevent.example) to test the live site instead.
+name: Platform check
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: "Live site to install from (blank: build this commit)"
+        required: false
+  pull_request:
+    paths: ["cmd/**", "internal/**", "definitions/**", "site/install/**", "site/scripts/**", "scripts/e2e.sh"]
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-15-intel is GitHub's Intel Mac runner; drop it if GitHub retires the label.
+        os: [macos-latest, macos-15-intel, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      SITE: ${{ inputs.site }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        if: inputs.site == ''
+        with: { go-version-file: go.mod }
+      - uses: actions/setup-node@v4
+        if: inputs.site == ''
+        with: { node-version: 22 }
+
+      - name: Build this commit and serve the site locally
+        if: inputs.site == ''
+        run: |
+          cd site && npm ci && cd ..
+          node site/scripts/build-downloads.mjs
+          (cd site/public && python3 -m http.server 8799 --bind 127.0.0.1 >/dev/null 2>&1 &)
+          sleep 2
+          echo "SITE=http://127.0.0.1:8799" >> "$GITHUB_ENV"
+        shell: bash
+        env:
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:8799
+      - name: Install like a user
+        run: curl -fsSL "$SITE/install.sh" | CACHEVENT_BASE="$SITE" sh
+
+      - name: macOS app is signed, not quarantined, and the right architecture
+        if: runner.os == 'macOS'
+        run: |
+          for d in /Applications "$HOME/Applications"; do [ -d "$d/Cache Vent.app" ] && APP="$d/Cache Vent.app"; done
+          test -n "$APP"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          ! xattr -p com.apple.quarantine "$APP" 2>/dev/null
+          plutil -lint "$APP/Contents/Info.plist"
+          file "$APP/Contents/MacOS/cachevent"
+          case "$(sysctl -n hw.optional.arm64 2>/dev/null || echo 0)" in
+            1) file "$APP/Contents/MacOS/cachevent" | grep -q arm64 ;;
+            *) file "$APP/Contents/MacOS/cachevent" | grep -q x86_64 ;;
+          esac
+          spctl --assess --type execute -vv "$APP" || echo "Gatekeeper assessment rejects ad hoc signatures by design; the app still opens because it isn't quarantined."
+
+      - name: macOS app opens and keeps running
+        if: runner.os == 'macOS'
+        run: |
+          open "$APP"
+          sleep 8
+          pgrep -fl "cachevent ui"
+          pkill -f "cachevent ui" || true
+
+      - name: Linux launcher is installed
+        if: runner.os == 'Linux'
+        run: |
+          cat ~/.local/share/applications/cachevent.desktop
+          test -s ~/.local/share/icons/hicolor/256x256/apps/cachevent.png
+
+      - name: End to end (scan, refuse your data, quarantine, restore, purge, interface)
+        run: sh scripts/e2e.sh "$HOME/.local/bin/cachevent"
+
+      - name: Uninstall
+        run: |
+          curl -fsSL "$SITE/install.sh" | CACHEVENT_BASE="$SITE" sh -s -- --uninstall
+          test ! -e "$HOME/.local/bin/cachevent"

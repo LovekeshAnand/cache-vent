@@ -55,17 +55,28 @@ Definitions are plain YAML files in [`definitions/`](definitions). Adding a tool
 
 ## Install
 
-There are no prebuilt releases yet. Build from source with Go 1.27 or newer.
+**macOS and Linux:** paste into Terminal.
 
 ```sh
-git clone <this repository> cache-vent
-cd cache-vent
+curl -fsSL https://cachevent.kelados.in/install.sh | sh
+```
 
-# Desktop app (Windows): no console window, opens the UI by default
-go build -ldflags "-s -w -H windowsgui -X main.defaultCmd=ui" -o CacheVent.exe ./cmd/cachevent
+On macOS this builds `Cache Vent.app` in Applications, signs it ad hoc on your Mac and clears the download flag, so it opens from Launchpad without an Apple Developer ID, admin password or System Settings changes. On Linux it installs `~/.local/bin/cachevent` and a launcher in your applications menu. Both verify the SHA256 checksum first, need no `sudo`, and uninstall with `sh -s -- --uninstall`.
 
-# Command line (any OS)
-go build -o cachevent ./cmd/cachevent
+**Windows:** paste into PowerShell, or download `CacheVent-windows-x64.exe` from the site.
+
+```powershell
+irm https://cachevent.kelados.in/install.ps1 | iex
+```
+
+This installs for the current user with a Start menu shortcut. Because nothing comes through a browser, SmartScreen doesn't prompt. A browser download does prompt, because the build isn't code signed yet: choose **More info**, then **Run anyway**.
+
+**From source** (Go 1.27 or newer):
+
+```sh
+git clone https://github.com/LovekeshAnand/cache-vent.git && cd cache-vent
+go build -ldflags "-s -w -H windowsgui -X main.defaultCmd=ui" -o CacheVent.exe ./cmd/cachevent   # Windows desktop app
+go build -o cachevent ./cmd/cachevent                                                         # CLI, any OS
 ```
 
 ## Desktop app
@@ -110,11 +121,13 @@ Cache Vent is built around a few rules the code enforces and the tests check:
 
 ## Platform support
 
-| | Scanning and CLI | Desktop window | Tested |
-|---|---|---|---|
-| Windows 10/11 | Native fast path (batched NTFS listing) | WebView2 | Yes, natively |
-| Linux | Portable path | Chrome/Edge app window | Unit tests and an end-to-end scan, clean and restore on Ubuntu (WSL 2) |
-| macOS | Portable path | Chrome/Edge app window | Builds and vets for amd64 and arm64; not yet run on a Mac |
+| | Scanning and CLI | Interface | Install | Tested |
+|---|---|---|---|---|
+| Windows 10/11, x64 and ARM64 | Native fast path (batched NTFS listing) | Own window (WebView2) | `install.ps1` or the `.exe` | Natively, including the installer |
+| Linux, x64 and ARM64 | Portable path | Chrome, Edge, Chromium or Brave app window, else the default browser | `install.sh` | Install, `scripts/e2e.sh`, tamper refusal and uninstall on Ubuntu (WSL 2) |
+| macOS 13+, Apple silicon and Intel | Portable path | Chrome, Edge, Brave, Chromium or Vivaldi app window, else the default browser | `install.sh` (ad hoc signed `.app`) | By `.github/workflows/platform-check.yml` on GitHub's Mac runners; not yet run on a Mac by hand |
+
+`scripts/e2e.sh` checks an installed build the way a user runs it, with a throwaway home folder: scan, refusing your data, quarantine, byte-identical restore, purge, and the interface's token guard. The platform-check workflow installs with `curl | sh` on macOS (Apple silicon and Intel) and Ubuntu, verifies the signature and quarantine flag, launches the app and runs that script.
 
 ## Performance
 
@@ -139,6 +152,8 @@ internal/envs/        Python environment analysis (venv, Poetry, pipenv, conda)
 internal/clean/       clean planning and safety checks
 internal/quarantine/  move, restore, purge
 assets/               logo, banner, icon generator
+scripts/e2e.sh        end-to-end check of an installed build (macOS, Linux)
+site/                 website (Next.js static export on Cloudflare Workers) and the install scripts
 ```
 
 Design notes are in [ARCHITECTURE.md](ARCHITECTURE.md).
@@ -158,6 +173,12 @@ Dependencies are kept minimal: `gopkg.in/yaml.v3`, plus `github.com/jchv/go-webv
 ## Contributing
 
 The most valuable contribution is a definition: what a tool stores, where, and a link proving what happens when it's removed. [DEFINITIONS.md](DEFINITIONS.md) describes the format. Bug reports are most useful with the output of `cachevent scan --json` for the affected item.
+
+## Contact
+
+Built by **Lovekesh Anand**: [GitHub](https://github.com/LovekeshAnand) · [X](https://x.com/LovekeshAnand07) · [LinkedIn](https://www.linkedin.com/in/lovekesh-anand-443138318/) · [lovekeshanand6@gmail.com](mailto:lovekeshanand6@gmail.com)
+
+Website: [cachevent.kelados.in](https://cachevent.kelados.in). Bugs and ideas go in [issues](https://github.com/LovekeshAnand/cache-vent/issues); security reports go by email, see [SECURITY.md](SECURITY.md).
 
 ## License
 

@@ -1,13 +1,17 @@
 {
-  // Static assets only: no Worker script runs, Cloudflare serves out/ directly.
+  // Cloudflare serves out/ directly; the Worker runs only for /downloads/* to count them.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "cache-vent",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
   // Routed in front of the existing proxied DNS record for this hostname.
   "routes": [{ "pattern": "cachevent.kelados.in/*", "zone_name": "kelados.in" }],
   "assets": {
     "directory": "./out",
+    "binding": "ASSETS",
+    "run_worker_first": ["/downloads/*"],
     "not_found_handling": "404-page",
     "html_handling": "auto-trailing-slash"
-  }
+  },
+  "d1_databases": [{ "binding": "DB", "database_name": "cache-vent", "database_id": "6a665669-9dcc-434d-a57a-8d5604f2c3aa" }]
 }

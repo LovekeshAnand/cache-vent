@@ -238,6 +238,26 @@ dialog .entry-h h2 { font-size: var(--text-md); font-family: var(--font-body); l
   main { padding-inline: var(--space-md); }
   .entry { margin-left: var(--space-sm); }
 }
+/* Narrow windows (the browser window on macOS and Linux can be resized this small). */
+@media (max-width: 40rem) {
+  .top-in { padding: var(--space-xs) var(--space-sm); }
+  .top-in .scope { order: 3; width: 100%; }
+  .top-in .scope button { flex: 1; }
+  main { padding: var(--space-lg) var(--space-sm) 160px; }
+  .drives { flex-wrap: nowrap; overflow-x: auto; width: 100%; }
+  .drives button { flex: none; }
+  .quick { flex-direction: column; align-items: stretch; }
+  .plan { height: 180px; }
+  .key-row span:last-child { display: none; }
+  .filters { justify-content: flex-start; }
+  .filters .field { flex: 1 1 100%; }
+  .path { max-width: 100%; }
+  .selbar-in { flex-wrap: wrap; padding: var(--space-xs) var(--space-sm); gap: var(--space-xs); }
+  .selbar-in p { flex: 1 1 100%; }
+  .selbar-in .key { flex: 1; justify-content: center; }
+  .foot { flex-wrap: wrap; }
+  .foot .key { flex: 1; justify-content: center; }
+}
 </style>
 </head>
 <body>

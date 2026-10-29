@@ -5,8 +5,9 @@
   X-Frame-Options: SAMEORIGIN
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
+# Always revalidate: binaries and SHA256SUMS.txt must change together on a release.
 /downloads/*
-  Cache-Control: public, max-age=3600
+  Cache-Control: no-cache
 
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable

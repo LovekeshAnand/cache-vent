@@ -29,6 +29,7 @@ Usage:
   cachevent restore ID...                           put quarantined items back
   cachevent purge [--all] [--yes]                   delete quarantined items (default: older than 14 days)
   cachevent ui [--no-window]                        open the desktop app
+  cachevent version                                 print the version
 
 Nothing is ever deleted outside quarantine. Quarantined items are purged after 14 days.
 `
@@ -37,6 +38,9 @@ Nothing is ever deleted outside quarantine. Quarantined items are purged after 1
 //
 //	go build -ldflags "-H windowsgui -X main.defaultCmd=ui" -o CacheVent.exe ./cmd/cachevent
 var defaultCmd = ""
+
+// version is set by release builds: -X main.version=0.1.0
+var version = "dev"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -52,8 +56,12 @@ func main() {
 	}
 	cmd, ok := cmds[os.Args[1]]
 	if !ok {
-		if a := os.Args[1]; a == "help" || a == "-h" || a == "--help" {
+		switch os.Args[1] {
+		case "help", "-h", "--help":
 			fmt.Print(usage)
+			return
+		case "version", "--version":
+			fmt.Println("cachevent", version)
 			return
 		}
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n%s", os.Args[1], usage)

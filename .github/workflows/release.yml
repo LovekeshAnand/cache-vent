@@ -1,0 +1,68 @@
+# Push a tag like v0.2.0 to release that version everywhere:
+#   1. tests (Go unit tests, then scripts/e2e.sh on the built Linux binary)
+#   2. builds all six binaries stamped with the version, plus SHA256SUMS.txt and the install scripts
+#   3. publishes them as a GitHub Release with generated notes
+#   4. deploys the same files to cachevent.kelados.in (needs the CLOUDFLARE_API_TOKEN and
+#      CLOUDFLARE_ACCOUNT_ID repository secrets; skipped with a warning if they're missing)
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Version from the tag
+        run: echo "CACHEVENT_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Go tests
+        run: go vet ./... && go test ./...
+
+      - name: Build binaries, checksums, install scripts and the site
+        working-directory: site
+        run: npm ci && npm run build
+
+      - name: End-to-end check of the Linux build
+        run: |
+          site/public/downloads/cachevent-linux-x64 version | grep -qx "cachevent $CACHEVENT_VERSION"
+          sh scripts/e2e.sh site/public/downloads/cachevent-linux-x64
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "Cache Vent $CACHEVENT_VERSION" \
+            site/public/downloads/CacheVent-windows-x64.exe site/public/downloads/CacheVent-windows-arm64.exe \
+            site/public/downloads/cachevent-macos-arm64 site/public/downloads/cachevent-macos-x64 \
+            site/public/downloads/cachevent-linux-x64 site/public/downloads/cachevent-linux-arm64 \
+            site/public/downloads/SHA256SUMS.txt site/public/install.sh site/public/install.ps1
+
+      - name: Deploy cachevent.kelados.in
+        working-directory: site
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN is not set; the website was not updated. Run 'npm run deploy' in site/ yourself."
+            exit 0
+          fi
+          npx wrangler d1 migrations apply cache-vent --remote
+          npx wrangler deploy

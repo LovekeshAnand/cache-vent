@@ -23,6 +23,27 @@ NEXT_PUBLIC_SITE_URL=https://cachevent.example npm run deploy
 
 Optionally set `NEXT_PUBLIC_GITHUB_URL` to show source links. Run `npx wrangler login` once first.
 
+## Download counts
+
+A small Worker (`worker/index.ts`) runs only for `/downloads/*`. It serves the file and adds one to a daily total in the `cache-vent` D1 database: file, source (`sh`/`ps1` install command or `web` link), and country. No IP addresses, user agents or cookies. HEAD requests and resumed downloads aren't counted.
+
+```sh
+npm run stats          # last 30 days: by file, source, country and day
+npm run stats -- 7     # last 7 days
+```
+
+Raw SQL: `npx wrangler d1 execute cache-vent --remote --command "SELECT * FROM downloads ORDER BY day DESC"`.
+
+## Google Analytics and Microsoft Clarity
+
+Both are opt-in: nothing loads until a visitor chooses Allow in the consent banner, and Cookie settings in the footer withdraws it. Set the IDs at build time; with neither set, there's no banner and no scripts.
+
+```sh
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX NEXT_PUBLIC_CLARITY_ID=abcdefghij npm run deploy
+```
+
+Events sent after consent: `download` (with the file) and `copy_install_command`.
+
 ## What is served
 
 | Path | |
