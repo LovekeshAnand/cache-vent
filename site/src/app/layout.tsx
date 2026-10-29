@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@/components/analytics";
+import { DownloadTracking } from "@/components/analytics";
+import { AnalyticsTags } from "@/components/analytics-tags";
 import { Footer } from "@/components/footer";
 import { Nav } from "@/components/nav";
 import { author, site } from "@/lib/site";
@@ -33,6 +34,9 @@ export const viewport: Viewport = { themeColor: "#ffffff", colorScheme: "light" 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <head>
+        <AnalyticsTags />
+      </head>
       <body className="flex min-h-dvh flex-col">
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
         <a
@@ -46,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <Footer />
-        <Analytics />
+        <DownloadTracking />
       </body>
     </html>
   );

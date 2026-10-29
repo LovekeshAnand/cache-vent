@@ -4,7 +4,7 @@ import { author, site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy",
-  description: "The Cache Vent app collects nothing. The website counts downloads without cookies and uses analytics only with your consent.",
+  description: "The Cache Vent app collects nothing. The website counts downloads and uses Google Analytics and Microsoft Clarity.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -12,8 +12,8 @@ export default function Privacy() {
   return (
     <ProsePage title="Privacy" updated="29 October 2026">
       <p>
-        Short version: the app collects nothing. This website counts downloads without cookies, and uses Google Analytics and Microsoft Clarity only if
-        you allow them.
+        Short version: the app collects nothing. This website counts downloads, and uses Google Analytics and Microsoft Clarity to understand how
+        the site is used.
       </p>
       <h2>The app</h2>
       <p>
@@ -32,12 +32,12 @@ export default function Privacy() {
         records the date, the file, whether it came from the website or an install script, and the country Cloudflare reports for the request.
         It does not store IP addresses, browser details or cookies, and the totals cannot identify you.
       </p>
-      <h2>Analytics, only with your consent</h2>
+      <h2>Analytics</h2>
       <p>
-        If you choose Allow in the banner, this site loads Google Analytics and Microsoft Clarity. Google Analytics measures visits and which buttons
-        are used. Clarity records how pages are used, such as clicks and scrolling, with page text masked, so we can fix confusing parts. Both set
-        cookies and are run by Google and Microsoft under their own privacy policies. If you choose No thanks, or never choose, neither loads. You can
-        change your mind any time with Cookie settings at the bottom of every page, which also clears their cookies.
+        This website uses Google Analytics and Microsoft Clarity. Google Analytics measures visits, where visitors come from and which buttons are
+        used, such as downloads and copying an install command. Clarity records how pages are used, such as clicks and scrolling, with page text
+        masked, so we can fix confusing parts. Both set cookies and are run by Google and Microsoft under their own privacy policies. You can block
+        them with your browser&apos;s tracking protection or an ad blocker; the site and downloads work the same without them.
       </p>
       <h2>Hosting</h2>
       <p>

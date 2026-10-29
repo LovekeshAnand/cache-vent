@@ -1,6 +1,5 @@
 import { EnvelopeSimple, GithubLogo, LinkedinLogo, XLogo } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { ConsentSettings } from "@/components/analytics";
 import { author, site, version } from "@/lib/site";
 
 const social = [
@@ -64,14 +63,13 @@ export function Footer() {
             <li><Link href="/privacy" className={link}>Privacy</Link></li>
             <li><Link href="/license" className={link}>License and terms</Link></li>
             <li><a href={`${site.github}/security/policy`} className={link}>Security</a></li>
-            <li><ConsentSettings className={link} /></li>
             <li><a href={`mailto:${author.email}`} className={link}>{author.email}</a></li>
           </ul>
         </nav>
       </div>
       <div className="border-t border-line">
         <p className="mx-auto max-w-6xl px-4 py-6 text-xs text-muted sm:px-6">
-          © 2026 {author.name} · {site.name} {version} · Analytics only if you allow it
+          © 2026 {author.name} · {site.name} {version} · Uses Google Analytics and Microsoft Clarity
         </p>
       </div>
     </footer>
