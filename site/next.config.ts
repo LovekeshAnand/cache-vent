@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
+// A static export: `next build` writes plain files to out/, which the Cloudflare
+// Worker serves as static assets (see wrangler.jsonc).
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  output: "export",
+  images: { unoptimized: true },
   turbopack: {
     rules: {
       "*.css": {

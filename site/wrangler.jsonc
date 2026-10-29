@@ -1,0 +1,13 @@
+{
+  // Static assets only: no Worker script runs, Cloudflare serves out/ directly.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cache-vent",
+  "compatibility_date": "2026-10-01",
+  // Routed in front of the existing proxied DNS record for this hostname.
+  "routes": [{ "pattern": "cachevent.kelados.in/*", "zone_name": "kelados.in" }],
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  }
+}

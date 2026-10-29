@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/public/downloads/
+/src/generated/
+/.wrangler/
+/public/install.sh
+/public/install.ps1
