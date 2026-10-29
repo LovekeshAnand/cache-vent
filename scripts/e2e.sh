@@ -59,7 +59,7 @@ pid=$!
 for _ in 1 2 3 4 5 6 7 8 9 10; do grep -q '^http' "$log" && break; sleep 0.5; done
 url=$(grep -m1 '^http' "$log") || fail "ui did not print its address"
 base=${url%%#*}; token=${url#*#}
-curl -fsS "$base" | grep -q '<title>Cache Vent</title>' || fail "ui page"
+curl -fsS "$base" -o "$HOME/page.html" && grep -q '<title>Cache Vent</title>' "$HOME/page.html" || fail "ui page"
 [ "$(curl -s -o /dev/null -w '%{http_code}' "${base}api/state")" = 403 ] || fail "api answered without the token"
 curl -fsS -H "X-Token: $token" "${base}api/state" | grep -q '"quarantine"' || fail "api state with token"
 kill "$pid" 2>/dev/null || true
