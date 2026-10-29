@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -27,5 +29,22 @@ func TestGrowth(t *testing.T) {
 	}
 	if g := s.growth(at(0, []string{`E:\`}, 5<<30)); len(g) != 0 {
 		t.Errorf("different roots compared: %+v", g)
+	}
+}
+
+func TestTrimProfileKeepsOnlySettings(t *testing.T) {
+	dir := t.TempDir()
+	for _, p := range []string{"Local State", "component_crx_cache/a.crx", "WidevineCdm/x.dll",
+		"Default/Preferences", "Default/Local Storage/leveldb/000.log", "Default/Extensions/abc/ext.js", "Default/Cache/data_0"} {
+		full := filepath.Join(dir, p)
+		os.MkdirAll(filepath.Dir(full), 0o755)
+		os.WriteFile(full, []byte("x"), 0o644)
+	}
+	trimProfile(dir)
+	for p, want := range map[string]bool{"Local State": true, "Default/Preferences": true, "Default/Local Storage/leveldb/000.log": true,
+		"component_crx_cache": false, "WidevineCdm": false, "Default/Extensions": false, "Default/Cache": false} {
+		if _, err := os.Stat(filepath.Join(dir, p)); (err == nil) != want {
+			t.Errorf("%s: exists=%v, want %v", p, err == nil, want)
+		}
 	}
 }

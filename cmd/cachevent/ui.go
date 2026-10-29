@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -72,6 +73,9 @@ func cmdUI(args []string) error {
 		fmt.Println(url)
 		select {}
 	}
+	// Both window engines keep a private profile in the data folder; keep them small.
+	trimProfile(filepath.Join(s.dataDir, "ui-profile"))
+	trimProfile(filepath.Join(s.dataDir, "webview", "EBWebView"))
 	if nativeWindow(s.dataDir, url) { // blocks until the window is closed
 		return nil
 	}
@@ -363,15 +367,38 @@ func writeJSON(w http.ResponseWriter, v any) {
 // openWindow starts Edge or Chrome in app mode (no tabs or address bar) with its
 // own profile, and closes `closed` when that window is shut. It reports false
 // if neither browser is installed.
+// leanBrowserFlags keep the window's private browser profile from growing: no extensions,
+// no component downloads (DRM, language models), no disk caches. The page is local anyway.
+var leanBrowserFlags = []string{"--disable-extensions", "--disable-component-update", "--disable-sync",
+	"--disable-background-networking", "--disk-cache-size=1", "--disable-gpu-shader-disk-cache"}
+
+// trimProfile empties a private browser profile in Cache Vent's data folder, keeping only
+// the page's saved settings (Local Storage, Preferences). Left alone, extensions and
+// components the browser fetched on its own grew one profile past 200 MB.
+func trimProfile(dir string) {
+	trim(dir, "default", "local state")
+	trim(filepath.Join(dir, "Default"), "local storage", "preferences")
+}
+
+func trim(dir string, keep ...string) {
+	ents, _ := os.ReadDir(dir)
+	for _, e := range ents {
+		if !slices.Contains(keep, strings.ToLower(e.Name())) {
+			os.RemoveAll(filepath.Join(dir, e.Name())) // a file the browser holds open stays; that's fine
+		}
+	}
+}
+
 func openWindow(dataDir, url string, closed chan struct{}) bool {
+	profile := filepath.Join(dataDir, "ui-profile")
 	for _, exe := range appBrowsers() {
 		if _, err := os.Stat(exe); err != nil {
 			if exe, err = exec.LookPath(exe); err != nil {
 				continue
 			}
 		}
-		cmd := exec.Command(exe, "--app="+url, "--user-data-dir="+filepath.Join(dataDir, "ui-profile"),
-			"--no-first-run", "--no-default-browser-check", "--window-size=1180,820")
+		cmd := exec.Command(exe, append([]string{"--app=" + url, "--user-data-dir=" + profile,
+			"--no-first-run", "--no-default-browser-check", "--window-size=1180,820"}, leanBrowserFlags...)...)
 		if cmd.Start() != nil {
 			continue
 		}

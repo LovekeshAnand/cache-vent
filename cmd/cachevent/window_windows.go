@@ -3,8 +3,10 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	webview2 "github.com/jchv/go-webview2"
 )
@@ -16,6 +18,7 @@ func init() { runtime.LockOSThread() }
 // ships with Windows: no browser, tabs, history or extensions. It blocks until the
 // window is closed, and reports false if the WebView2 runtime is missing.
 func nativeWindow(dataDir, url string) bool {
+	os.Setenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", strings.Join(leanBrowserFlags, " "))
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
 		DataPath:      filepath.Join(dataDir, "webview"),
 		AutoFocus:     true,
